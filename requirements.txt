@@ -1,0 +1,5 @@
+# service only (the core library and tools use the standard library)
+pykx>=2.0
+pandas
+# tests
+pytest

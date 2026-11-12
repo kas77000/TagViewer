@@ -32,17 +32,28 @@ The app only reads the knowledge JSON; the JSON schema is the contract between t
 ```
 web/tagviewer.html                     single file, no build, Edge/Chrome
 tools/configure_share.py               bakes share path into the HTML, prepares the share
-service/tagviewer_service.py           folder watcher, kdb lookup, writes responses
-service/analyzer.py                    fixmsg parsing + rule/relationship evaluation (pure)
+service/tagviewer_service.py           folder watcher, kdb lookup, writes responses, heartbeat
 service/kdb_client.py                  pykx access to the RDB (lazy import), fake mode
-service/local_settings.py.example      RDB host/port, share path, poll interval
+service/settings.py + local_settings.py.example
+tagviewer/fixmsg.py conditions.py rules.py analyzer.py   pure core (stdlib only)
+tools/extract_java_tags.py plan_batches.py import_bcore_csv.py build_knowledge.py
+      validate_knowledge.py explain.py                     knowledge pipeline + CLI
 knowledge/tag-knowledge.json           generated knowledge base
 knowledge/schema.md                    schema of the knowledge JSON
+knowledge/build/  knowledge/curated/   generation intermediates / hand corrections
 skills/claude/tag-knowledge/SKILL.md   Claude skill to regenerate the knowledge base
 skills/copilot/tag-knowledge.prompt.md Copilot prompt file (same content)
-.github/copilot-instructions.md        points Copilot at the prompt file
+.claude/skills/, .github/prompts/      discoverable copies; .github/copilot-instructions.md
+docs/protocol.md                       request/response/heartbeat formats
 tests/                                 pytest
 ```
+
+Implementation notes (added during build): requests are claimed by an atomic rename into
+`processing/`; a `status/service.json` heartbeat lets the page show the service state;
+sub-tag aliases (e.g. `PQS`) are normalised to numbers; the analyzer detects which
+config rules fired from the rule segments the engine appends to the stored fixmsg
+(statuses `applied` / `fires` / `may_fire`). `target_stock` is optionally queried for extra
+condition context (`STOCK_FIELD_MAP`).
 
 ## Share-folder protocol
 

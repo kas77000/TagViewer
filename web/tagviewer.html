@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TagViewer</title>
+<style>
+:root{
+  --bg:#f6f7f9;--panel:#fff;--ink:#1c2330;--muted:#5d6878;--line:#e2e6ec;--accent:#2457c5;--accent-ink:#fff;
+  --high:#c62828;--high-bg:#fdecec;--medium:#b45d00;--medium-bg:#fff3e0;--low:#2e6b3a;--low-bg:#eaf6ec;--info:#4a5568;--info-bg:#eef1f5;
+  --code:#f0f2f5;--ok:#1e7d32;--warn:#b45d00;--bad:#c62828;
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#12161c;--panel:#1a2029;--ink:#e6e9ee;--muted:#9aa5b4;--line:#2c3440;--accent:#6c9cff;--accent-ink:#0d1117;
+  --high:#ff8a80;--high-bg:#3a1d1d;--medium:#ffb74d;--medium-bg:#3a2a14;--low:#81c784;--low-bg:#1c3122;--info:#b0bac8;--info-bg:#232b36;
+  --code:#222a35;--ok:#81c784;--warn:#ffb74d;--bad:#ff8a80;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.2px}
+header .sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:var(--info-bg);color:var(--info);font-size:12px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+main{max-width:1280px;margin:0 auto;padding:20px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media (max-width:600px){main{padding:16px 16px}header{padding:10px 16px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0;overflow-wrap:anywhere}
+.card h2{font-size:15px;margin:0 0 12px;font-weight:600}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input[type=text]{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:0;flex:0 1 220px;width:220px;max-width:100%}
+input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{font:inherit;padding:9px 16px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer;font-weight:600}
+button.ghost{background:transparent;color:var(--accent)}
+button:disabled{opacity:.5;cursor:default}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+code,.mono{font-family:Consolas,"Cascadia Mono",Menlo,monospace;font-size:12.5px}
+code{background:var(--code);padding:1px 5px;border-radius:4px;word-break:break-all}
+.banner{padding:12px 14px;border-radius:8px;margin:0}
+.banner.bad{background:var(--high-bg);color:var(--high)}
+.banner.warn{background:var(--medium-bg);color:var(--medium)}
+.banner.info{background:var(--info-bg);color:var(--info)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px 16px}
+.kv .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.kv .v{font-weight:600;word-break:break-word}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid transparent;cursor:pointer;user-select:none}
+.chip.off{opacity:.35}
+.sev-high{background:var(--high-bg);color:var(--high)}
+.sev-medium{background:var(--medium-bg);color:var(--medium)}
+.sev-low{background:var(--low-bg);color:var(--low)}
+.sev-info{background:var(--info-bg);color:var(--info)}
+.effect{border:1px solid var(--line);border-left:4px solid var(--info);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.effect.high{border-left-color:var(--high)}.effect.medium{border-left-color:var(--medium)}.effect.low{border-left-color:var(--low)}
+.effect .t{font-weight:600}
+.badge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:600;background:var(--info-bg);color:var(--info);margin-right:4px;text-transform:uppercase;letter-spacing:.3px}
+.badge.applied,.badge.fires{background:var(--high-bg);color:var(--high)}
+.badge.may_fire{background:var(--medium-bg);color:var(--medium)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+tr.tagrow{cursor:pointer}
+td.val{min-width:90px;max-width:240px}
+td.val code{word-break:normal;overflow-wrap:anywhere;white-space:pre-wrap}
+td.tagcol{white-space:nowrap}
+th,td{overflow-wrap:normal;word-break:normal}
+td.namecol{min-width:170px}
+td.aliascol{white-space:nowrap}
+table{min-width:640px}
+tr.tagrow:hover td{background:var(--bg)}
+tr.unknown td:first-child{border-left:3px solid var(--warn)}
+tr.detail td{background:var(--bg);font-size:13px}
+.detail dl{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;margin:0}
+.detail dt{color:var(--muted)}
+.detail dd{margin:0;word-break:break-word}
+.tablewrap{max-height:70vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.chain{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0}
+.chain .step{background:var(--code);border-radius:4px;padding:2px 6px}
+.chain .step.may{border:1px dashed var(--medium)}
+.hist{display:grid;gap:6px}
+.hist .item{display:flex;gap:10px;align-items:center;padding:6px 8px;border-radius:6px;cursor:pointer}
+.hist .item:hover{background:var(--bg)}
+.spinner{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.hidden{display:none!important}
+details summary{cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <h1>TagViewer</h1>
+  <span class="pill" id="sharePill"><span class="dot" id="shareDot"></span><span id="shareText">Share: not connected</span></span>
+  <span class="pill" id="svcPill"><span class="dot" id="svcDot"></span><span id="svcText">Service: unknown</span></span>
+  <span class="sp"></span>
+  <span class="pill small mono" title="Your TagViewer identity on this browser">user <span id="guidText">…</span></span>
+</header>
+
+<main>
+  <section class="card hidden" id="connectCard">
+    <h2>Connect the TagViewer share folder</h2>
+    <p>TagViewer exchanges requests with its service through a shared folder. Your browser needs
+      permission to use it, once.</p>
+    <p>Folder to select: <code id="sharePathText"></code></p>
+    <div class="row">
+      <button id="connectBtn">Select folder…</button>
+      <button class="ghost hidden" id="reconnectBtn">Allow access again</button>
+    </div>
+    <p class="banner bad hidden" id="connectError" style="margin-top:12px"></p>
+    <p class="small muted" id="browserNote" style="margin-top:12px"></p>
+  </section>
+
+  <div class="layout">
+    <div style="display:grid;gap:16px;min-width:0;grid-template-columns:minmax(0,1fr)">
+      <section class="card">
+        <h2>Look up an order</h2>
+        <form class="row" id="lookupForm" autocomplete="off">
+          <label for="algoidt" class="muted">ALGOIDT</label>
+          <input type="text" id="algoidt" inputmode="numeric" placeholder="e.g. 12345678" maxlength="10">
+          <button type="submit" id="submitBtn" disabled>Explain tags</button>
+          <span id="pendingText" class="muted small"></span>
+        </form>
+        <p class="small muted" style="margin:10px 0 0">The service looks the ID up in today's <code>target</code> table (RDB)
+          and explains every tag in its <code>fixmsg</code>, plus what the combination of tags does.</p>
+      </section>
+
+      <section id="result"></section>
+    </div>
+
+    <aside class="card" style="align-self:start">
+      <h2>Recent requests</h2>
+      <div class="hist" id="history"><span class="muted small">None yet.</span></div>
+    </aside>
+  </div>
+</main>
+
+<script>
+/* TAGVIEWER-CONFIG-BEGIN */
+const CONFIG = {"sharePath": "", "shareId": "", "responseTimeoutSec": 60, "pollMs": 1500};
+/* TAGVIEWER-CONFIG-END */
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const MAX_ID = 2147483647;
+const state = { guid: null, root: null, pending: new Map(), results: new Map(), lastShown: null };
+
+/* ---------- small helpers ---------- */
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null) e.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  return e;
+}
+const fmt = (v) => v == null ? "" : (typeof v === "object" ? JSON.stringify(v) : String(v));
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+
+/* ---------- IndexedDB: identity, folder handle, cached results ---------- */
+function idb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open("tagviewer", 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore("kv"); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function kvGet(key) {
+  try { const db = await idb(); return await new Promise((res) => {
+    const q = db.transaction("kv").objectStore("kv").get(key); q.onsuccess = () => res(q.result); q.onerror = () => res(undefined); });
+  } catch { return undefined; }
+}
+async function kvSet(key, val) {
+  try { const db = await idb(); await new Promise((res) => {
+    const t = db.transaction("kv", "readwrite"); t.objectStore("kv").put(val, key); t.oncomplete = res; t.onerror = res; });
+  } catch {}
+}
+
+async function identity() {
+  let g = lsGet("tagviewer.guid", null);
+  if (!g || !UUID_RE.test(g)) g = await kvGet("guid");
+  if (!g || !UUID_RE.test(g)) g = crypto.randomUUID();
+  lsSet("tagviewer.guid", g); await kvSet("guid", g);
+  return g;
+}
+
+/* ---------- share folder ---------- */
+const supported = "showDirectoryPicker" in window;
+
+async function checkMarker(dir) {
+  let marker;
+  try {
+    const fh = await dir.getFileHandle(".tagviewer-share");
+    marker = JSON.parse(await (await fh.getFile()).text());
+  } catch { throw new Error("This folder is not a TagViewer share (no .tagviewer-share file). Select " + (CONFIG.sharePath || "the TagViewer share folder") + "."); }
+  if (CONFIG.shareId && marker.shareId !== CONFIG.shareId)
+    throw new Error("This is a different TagViewer share than the one this page was configured for. Select " + CONFIG.sharePath + ".");
+  for (const d of ["requests", "responses", "status"]) await dir.getDirectoryHandle(d, { create: d === "responses" });
+  return marker;
+}
+
+async function useFolder(dir) {
+  await checkMarker(dir);
+  state.root = dir;
+  await kvSet("folder", dir);
+  $("connectCard").classList.add("hidden");
+  setShare("ok", "Share: connected");
+  $("submitBtn").disabled = false;
+  pollLoop();
+}
+
+function setShare(kind, text) { $("shareDot").className = "dot " + kind; $("shareText").textContent = text; }
+
+async function initFolder() {
+  $("sharePathText").textContent = CONFIG.sharePath || "(not configured — ask for a configured copy of this page)";
+  if (!supported) {
+    $("connectCard").classList.remove("hidden");
+    $("connectBtn").disabled = true;
+    $("browserNote").textContent = "This browser cannot access folders. Open this page in Microsoft Edge or Google Chrome.";
+    setShare("bad", "Share: unsupported browser");
+    return;
+  }
+  const saved = await kvGet("folder");
+  if (saved) {
+    const perm = await saved.queryPermission({ mode: "readwrite" });
+    if (perm === "granted") {
+      try { await useFolder(saved); return; } catch (e) { showConnectError(e); }
+    } else {
+      $("reconnectBtn").classList.remove("hidden");
+      $("reconnectBtn").onclick = async () => {
+        if (await saved.requestPermission({ mode: "readwrite" }) === "granted") {
+          try { await useFolder(saved); } catch (e) { showConnectError(e); }
+        }
+      };
+    }
+  }
+  $("connectCard").classList.remove("hidden");
+  setShare("warn", "Share: not connected");
+}
+
+function showConnectError(e) {
+  const b = $("connectError"); b.textContent = e.message || String(e); b.classList.remove("hidden");
+  setShare("bad", "Share: wrong folder");
+}
+
+$("connectBtn").addEventListener("click", async () => {
+  $("connectError").classList.add("hidden");
+  try {
+    const dir = await window.showDirectoryPicker({ id: "tagviewer-share", mode: "readwrite" });
+    await useFolder(dir);
+  } catch (e) { if (e.name !== "AbortError") showConnectError(e); }
+});
+
+/* ---------- requests ---------- */
+async function writeJson(dir, name, data) {
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable();       // written to a swap file, renamed on close: atomic for the reader
+  await w.write(JSON.stringify(data));
+  await w.close();
+}
+
+$("lookupForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const raw = $("algoidt").value.trim();
+  if (!/^\d+$/.test(raw) || Number(raw) <= 0 || Number(raw) > MAX_ID) {
+    renderBanner("bad", "ALGOIDT must be a positive whole number."); return;
+  }
+  if (!state.root) { renderBanner("bad", "Connect the share folder first."); return; }
+  const req = { schemaVersion: 1, requestId: crypto.randomUUID(), userGuid: state.guid, algoidt: Number(raw),
+                createdAt: new Date().toISOString() };
+  try {
+    const dir = await state.root.getDirectoryHandle("requests");
+    await writeJson(dir, `${req.userGuid}__${req.requestId}.json`, req);
+  } catch (e) { renderBanner("bad", "Could not write the request to the share: " + e.message); return; }
+  state.pending.set(req.requestId, { ...req, sentAt: Date.now() });
+  addHistory({ requestId: req.requestId, algoidt: req.algoidt, createdAt: req.createdAt, status: "pending" });
+  state.lastShown = req.requestId;
+  renderWaiting(req);
+  updatePending();
+});
+
+function updatePending() {
+  const n = state.pending.size;
+  $("pendingText").textContent = n ? `${n} request${n > 1 ? "s" : ""} waiting…` : "";
+}
+
+/* ---------- polling for our own answers ---------- */
+let polling = false;
+async function pollLoop() {
+  if (polling) return; polling = true;
+  while (true) {
+    try { await pollOnce(); } catch (e) { console.warn(e); }
+    await new Promise((r) => setTimeout(r, CONFIG.pollMs || 1500));
+  }
+}
+
+async function pollOnce() {
+  if (!state.root) return;
+  await readHeartbeat();
+  if (!state.pending.size) return;
+  let mine;
+  try { mine = await (await state.root.getDirectoryHandle("responses")).getDirectoryHandle(state.guid); }
+  catch { mine = null; }
+  for (const [rid, p] of [...state.pending]) {
+    if (mine) {
+      try {
+        const fh = await mine.getFileHandle(rid + ".json");
+        const resp = JSON.parse(await (await fh.getFile()).text());
+        if (resp.requestId !== rid || resp.userGuid !== state.guid) continue;   // never someone else's
+        state.pending.delete(rid);
+        await mine.removeEntry(rid + ".json").catch(() => {});
+        await storeResult(resp);
+        updateHistory(rid, resp.status);
+        if (state.lastShown === rid) renderResult(resp);
+        continue;
+      } catch (e) { /* not there yet, or still being written */ }
+    }
+    const waited = (Date.now() - p.sentAt) / 1000;
+    if (state.lastShown === rid) renderWaiting(p, waited);
+  }
+  updatePending();
+}
+
+let svcOnline = null;
+async function readHeartbeat() {
+  try {
+    const fh = await (await state.root.getDirectoryHandle("status")).getFileHandle("service.json");
+    const s = JSON.parse(await (await fh.getFile()).text());
+    const age = (Date.now() - Date.parse(s.heartbeatAt)) / 1000;
+    svcOnline = age < 30;
+    $("svcDot").className = "dot " + (svcOnline ? "ok" : "bad");
+    $("svcText").textContent = svcOnline ? `Service: online (${s.service})` : `Service: offline since ${new Date(s.heartbeatAt).toLocaleTimeString()}`;
+    $("svcPill").title = `knowledge ${s.knowledgeVersion || "?"}, handled ${s.handled}` + (s.lastError ? `\nlast error: ${s.lastError}` : "");
+  } catch { svcOnline = false; $("svcDot").className = "dot warn"; $("svcText").textContent = "Service: no heartbeat"; }
+}
+
+/* ---------- results cache + history ---------- */
+async function storeResult(resp) {
+  state.results.set(resp.requestId, resp);
+  const keep = lsGet("tagviewer.history", []).slice(0, 20).map((h) => h.requestId);
+  const cache = (await kvGet("results")) || {};
+  cache[resp.requestId] = resp;
+  for (const k of Object.keys(cache)) if (!keep.includes(k)) delete cache[k];
+  await kvSet("results", cache);
+}
+function addHistory(h) { const list = lsGet("tagviewer.history", []); list.unshift(h); lsSet("tagviewer.history", list.slice(0, 20)); renderHistory(); }
+function updateHistory(rid, status) { const list = lsGet("tagviewer.history", []); for (const h of list) if (h.requestId === rid) h.status = status; lsSet("tagviewer.history", list); renderHistory(); }
+function renderHistory() {
+  const box = $("history"); box.replaceChildren();
+  const list = lsGet("tagviewer.history", []);
+  if (!list.length) { box.append(el("span", { class: "muted small", text: "None yet." })); return; }
+  for (const h of list) {
+    const status = state.pending.has(h.requestId) ? "pending" : (h.status === "pending" ? "no answer" : h.status);
+    box.append(el("div", { class: "item", onclick: () => showHistory(h) },
+      el("span", { class: "mono", text: h.algoidt }),
+      el("span", { class: "badge " + (status === "ok" ? "" : status === "pending" ? "may_fire" : "fires"), text: status }),
+      el("span", { class: "small muted", text: new Date(h.createdAt).toLocaleTimeString() })));
+  }
+}
+async function showHistory(h) {
+  state.lastShown = h.requestId;
+  if (state.pending.has(h.requestId)) { renderWaiting(state.pending.get(h.requestId)); return; }
+  let r = state.results.get(h.requestId);
+  if (!r) { const cache = (await kvGet("results")) || {}; r = cache[h.requestId]; }
+  if (r) renderResult(r); else { $("algoidt").value = h.algoidt; renderBanner("info", "That answer is no longer cached. Press “Explain tags” to ask again."); }
+}
+
+/* ---------- rendering ---------- */
+function renderBanner(kind, text) { $("result").replaceChildren(el("p", { class: "banner " + kind, text })); }
+
+function renderWaiting(req, waited = 0) {
+  const late = waited > (CONFIG.responseTimeoutSec || 60);
+  const box = el("div", { class: "card" },
+    el("div", { class: "row" }, late ? null : el("span", { class: "spinner" }),
+      el("span", { text: `ALGOIDT ${req.algoidt}: ${late ? "no answer yet" : "waiting for the service…"}` }),
+      el("span", { class: "muted small", text: `${Math.round(waited)} s` })));
+  if (late) box.append(el("p", { class: "banner warn", style: "margin-top:10px",
+    text: svcOnline === false ? "The service does not seem to be running (no recent heartbeat). Your request stays queued and will be answered when it comes back."
+                              : "The service is taking longer than usual. Still waiting — the answer will appear here." }));
+  $("result").replaceChildren(box);
+}
+
+function renderResult(r) {
+  const out = [];
+  if (r.status === "not_found") { $("result").replaceChildren(el("p", { class: "banner warn", text: r.message || `ALGOIDT ${r.algoidt} does not exist.` })); return; }
+  if (r.status !== "ok") { $("result").replaceChildren(el("p", { class: "banner bad", text: r.message || "The service returned an error." })); return; }
+
+  const o = r.order || {};
+  const head = el("section", { class: "card" },
+    el("h2", { text: `Order ${r.algoidt}` }),
+    el("div", { class: "grid2" }, ...[["Symbol", o.sym], ["Side", o.side], ["Size", o.size], ["Algo", o.algo], ["Trader", o.trader],
+      ["Basket", o.basket], ["Limit", o.limit_price], ["Time", o.time]].filter(([, v]) => v != null && v !== "")
+      .map(([k, v]) => el("div", { class: "kv" }, el("div", { class: "k", text: k }), el("div", { class: "v", text: fmt(v) })))),
+    r.message ? el("p", { class: "banner info", style: "margin-top:12px", text: r.message }) : null,
+    el("details", { style: "margin-top:12px" }, el("summary", { class: "small muted", text: "Raw fixmsg" }),
+      el("p", {}, el("code", { text: o.fixmsg || "" })),
+      r.ruleSegmentsDetected ? el("p", { class: "small muted" }, "Sent by the client: ", el("code", { text: r.clientFixmsg || "" })) : null),
+    el("p", { class: "small muted", style: "margin:10px 0 0",
+      text: `${r.counts?.tags ?? 0} tags (${r.counts?.unknownTags ?? 0} unknown) · ${r.counts?.effects ?? 0} effects · rules: ${r.counts?.rulesApplied ?? 0} applied, ${r.counts?.rulesFire ?? 0} fire, ${r.counts?.rulesMayFire ?? 0} may fire · rule set ${r.ruleSet || "-"} · knowledge ${r.knowledgeVersion || "?"} · answered ${new Date(r.answeredAt).toLocaleTimeString()}` }));
+  out.push(head);
+  out.push(renderEffects(r));
+  if ((r.overrideChains || []).length) out.push(renderChains(r));
+  out.push(renderTags(r));
+  $("result").replaceChildren(...out);
+}
+
+const SEVS = ["high", "medium", "low", "info"];
+function renderEffects(r) {
+  const effects = r.effects || [];
+  const on = new Set(lsGet("tagviewer.sevs", SEVS));
+  const list = el("div");
+  const draw = () => {
+    list.replaceChildren();
+    const shown = effects.filter((e) => on.has(e.severity));
+    if (!shown.length) list.append(el("p", { class: "muted", text: effects.length ? "No effects at the selected severities." : "No conflicts or side effects found for this combination of tags." }));
+    const sure = shown.filter((e) => e.status !== "may_fire");
+    const maybe = shown.filter((e) => e.status === "may_fire");
+    if (shown.length && !sure.length) list.append(el("p", { class: "muted", text: "Nothing confirmed; see the possible effects below." }));
+    for (const e of sure) list.append(effectCard(e));
+    if (maybe.length) {
+      const d = el("details", { style: "margin-top:8px" },
+        el("summary", { class: "small", text: `${maybe.length} more effect${maybe.length > 1 ? "s" : ""} that may apply (depend on data the service cannot see)` }));
+      for (const e of maybe) d.append(effectCard(e));
+      list.append(d);
+    }
+  };
+  const effectCard = (e) => {
+      return (el("div", { class: "effect " + e.severity },
+        el("div", { class: "row" },
+          el("span", { class: "badge " + e.status, text: e.status === "applied" ? "applied" : e.status === "fires" ? "applies" : "may apply" }),
+          el("span", { class: "badge", text: (e.kind || "").replace("_", " ") }),
+          el("span", { class: "t", text: e.title || e.id })),
+        el("div", { style: "margin-top:4px", text: e.explanation || "" }),
+        (e.tags || []).length ? el("div", { class: "small muted", style: "margin-top:4px" }, "Tags: ", ...(e.tags.map((t) => el("code", { text: t })))) : null,
+        (e.unresolvedConditions || []).length ? el("div", { class: "small muted", style: "margin-top:4px" }, "Depends on (not checkable from the order): ",
+          el("span", { class: "mono", text: e.unresolvedConditions.join(", ") })) : null,
+        (e.sources || []).length ? el("div", { class: "small muted", text: "Source: " + e.sources.join(", ") }) : null));
+  };
+  const chips = el("div", { class: "chips" }, ...SEVS.map((s) => {
+    const n = effects.filter((e) => e.severity === s).length;
+    const c = el("span", { class: `chip sev-${s}` + (on.has(s) ? "" : " off"), text: `${s} ${n}` });
+    c.onclick = () => { on.has(s) ? on.delete(s) : on.add(s); c.classList.toggle("off"); lsSet("tagviewer.sevs", [...on]); draw(); };
+    return c;
+  }));
+  draw();
+  return el("section", { class: "card" },
+    el("div", { class: "row", style: "justify-content:space-between;margin-bottom:10px" }, el("h2", { style: "margin:0", text: "Effects of this combination of tags" }), chips),
+    el("p", { class: "small muted", style: "margin-top:0", text: "“Applied” is confirmed by the fixmsg itself; “applies” means every condition holds; “may apply” depends on market or engine data the service cannot see." }),
+    list);
+}
+
+function renderChains(r) {
+  return el("section", { class: "card" }, el("h2", { text: "Tags changed after the client sent them" }),
+    ...r.overrideChains.map((c) => el("div", { class: "chain" },
+      el("strong", { text: c.label || c.tag }), el("span", { class: "muted", text: ":" }),
+      ...c.steps.flatMap((s, i) => [i ? el("span", { class: "muted", text: "→" }) : null,
+        el("span", { class: "step mono" + (s.status === "may_fire" ? " may" : ""), title: s.source + (s.status ? ` (${s.status})` : ""),
+          text: `${s.value}  ·  ${s.source === "client" ? "client" : s.source.split(":").pop().replace(/^/, "L")}` })]),
+      el("span", { class: "muted small", text: c.final != null ? ` final ${c.final}` : "" }))));
+}
+
+function renderTags(r) {
+  const tags = r.tags || [];
+  const filter = el("input", { type: "text", placeholder: "Filter tags…", style: "min-width:200px" });
+  const body = el("tbody");
+  const draw = () => {
+    const q = filter.value.trim().toLowerCase();
+    body.replaceChildren();
+    for (const t of tags) {
+      const hay = [t.id, t.key, t.alias, t.name, t.value, t.description, t.category].map(fmt).join(" ").toLowerCase();
+      if (q && !hay.includes(q)) continue;
+      const tr = el("tr", { class: "tagrow" + (t.known ? "" : " unknown") },
+        el("td", { class: "mono tagcol", text: t.parent ? `9012/${t.number}` : t.id }),
+        el("td", { class: "mono aliascol", text: t.alias || "" }),
+        el("td", { class: "namecol" }, el("div", { text: t.name || "" }), t.category ? el("div", { class: "small muted", text: t.category }) : null),
+        el("td", { class: "val" }, el("code", { text: t.value }), t.history ? el("div", { class: "small muted", text: "was " + t.history.slice(0, -1).join(" → ") }) : null),
+        el("td", {}, t.valueMeaning ? el("div", { class: "small", text: t.valueMeaning }) : null, el("div", { class: "small muted", text: t.description || "" })));
+      const det = el("tr", { class: "detail hidden" }, el("td", { colspan: 5 }, tagDetail(t)));
+      tr.onclick = () => det.classList.toggle("hidden");
+      body.append(tr, det);
+    }
+  };
+  filter.oninput = draw; draw();
+  return el("section", { class: "card" },
+    el("div", { class: "row", style: "justify-content:space-between;margin-bottom:10px" }, el("h2", { style: "margin:0", text: `Tags (${tags.length})` }), filter),
+    el("div", { class: "tablewrap" }, el("table", {},
+      el("thead", {}, el("tr", {}, ...["Tag", "Alias", "Name", "Value", "Meaning"].map((h) => el("th", { text: h })))), body)),
+    el("p", { class: "small muted", style: "margin:8px 0 0", text: "Click a row for the full definition." }));
+}
+
+function tagDetail(t) {
+  const dl = el("dl");
+  const add = (k, v) => { if (v == null || v === "" || (Array.isArray(v) && !v.length)) return; dl.append(el("dt", { text: k }), el("dd", {}, v instanceof Node ? v : fmt(v))); };
+  add("Description", t.description);
+  add("Value format", t.valueFormat);
+  add("Type", t.type);
+  if ((t.allowedValues || []).length) add("Possible values", el("div", {}, ...t.allowedValues.map((a) => el("div", {}, el("code", { text: fmt(a.value) }), " ", a.meaning || ""))));
+  add("Default", t.default);
+  if (t.example) add("Example", typeof t.example === "object" ? el("div", {}, el("code", { text: fmt(t.example.value) }), " ", t.example.explanation || "") : t.example);
+  add("Applies to", (t.appliesTo || []).join(", "));
+  if ((t.algorithmDependent || []).length) add("Depends on algo", el("div", {}, ...t.algorithmDependent.map((a) => el("div", {}, el("strong", { text: (a.algorithms || []).join(", ") + ": " }), a.behavior || ""))));
+  add("Internal", t.internal ? "yes — engine-internal parameter" : null);
+  add("Confidence", t.confidence);
+  add("Sources", (t.sources || []).join(", "));
+  return dl;
+}
+
+/* ---------- start ---------- */
+(async function start() {
+  state.guid = await identity();
+  $("guidText").textContent = state.guid.slice(0, 8);
+  $("guidText").parentElement.title = "Your TagViewer identity on this browser: " + state.guid;
+  // requests sent before a reload are still ours: keep waiting for them
+  for (const h of lsGet("tagviewer.history", [])) {
+    if (h.status === "pending" && Date.now() - Date.parse(h.createdAt) < 3600e3)
+      state.pending.set(h.requestId, { ...h, userGuid: state.guid, sentAt: Date.parse(h.createdAt) });
+  }
+  renderHistory(); updatePending();
+  await initFolder();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+service/local_settings.py
+service/logs/
+dist/
+knowledge/build/batches/
+knowledge/build/raw_java_tags.prev.json
+*.tmp

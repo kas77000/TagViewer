@@ -1,0 +1,7970 @@
+[
+ {
+  "id": "9012.1",
+  "number": "1",
+  "parent": "9012",
+  "alias": "ALGO",
+  "name": "Algorithm override",
+  "category": "algorithm",
+  "description": "Sets the algorithm inside 9012, replacing the algorithm from 9001 (client algo). The value is upper-cased and passed through the shorthand map (algo_from_shorthand); an unknown/invalid name is silently ignored and the previous algorithm is kept. The whole tag is ignored when the OEO config lists the current algorithm in no_algo_tag. It also derives the impact algorithm (e.g. SHADOW1/2/3 -> SHADOW, VWAP1..3/OPEVWAPn -> VWAP, ICEDMA -> SDMA).",
+  "valueFormat": "<algorithm name or shorthand>",
+  "type": "enum",
+  "allowedValues": [],
+  "default": "none (algorithm comes from 9001)",
+  "example": {
+   "value": "PASS",
+   "explanation": "Run the order as PASS regardless of the 9001 algorithm."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1-01",
+    "kind": "override",
+    "severity": "high",
+    "tags": [
+     "9012.1",
+     "9001"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1)!=null"
+     }
+    ],
+    "title": "9012 ALGO beats 9001",
+    "explanation": "__p_1_ALGO assigns _algorithm directly while parsing 9012, which happens after 9001 has been read (parse900Tags/processAlgorithm), so a valid sub-tag 1 replaces the 9001 algorithm and any relay conversion computed from it. Greek tags 9004-9007 are mapped using the algorithm in effect before 9012 is parsed, and are re-parsed only when the 9012 algo differs from the client algo (parsegreek).",
+    "sources": [
+     "Parameters.java:2990",
+     "Parameters.java:11277",
+     "Parameters.java:11279",
+     "Parameters.java:11285",
+     "Parameters.java:11288"
+    ]
+   },
+   {
+    "id": "REL-9012.1-02",
+    "kind": "ineffective",
+    "severity": "medium",
+    "tags": [
+     "9012.1"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1)!=null"
+     },
+     {
+      "field": "noAlgoTag",
+      "op": "=",
+      "value": "true",
+      "raw": "noAlgoTag=true"
+     }
+    ],
+    "title": "Ignored for algorithms listed in no_algo_tag",
+    "explanation": "If Util.getOEOConfig().no_algo_tag(<current algorithm>) is true the tag is not applied at all.",
+    "sources": [
+     "Parameters.java:2991"
+    ]
+   },
+   {
+    "id": "REL-9012.1-03",
+    "kind": "conversion",
+    "severity": "high",
+    "tags": [
+     "9012.1",
+     "9012.104"
+    ],
+    "algorithms": [
+     "SDMA",
+     "DMA",
+     "ICEDMA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "SDMA^DMA^ICEDMA",
+      "raw": "algorithm=SDMA^DMA^ICEDMA"
+     },
+     {
+      "field": "price",
+      "op": ">",
+      "value": "0",
+      "raw": "price>0"
+     },
+     {
+      "field": "start_to_close",
+      "op": "<",
+      "value": "0",
+      "raw": "start_to_close<0"
+     },
+     {
+      "field": "tag9012(USEDLP)",
+      "op": "=",
+      "value": "1^2",
+      "raw": "tag9012(USEDLP)=1^2"
+     }
+    ],
+    "title": "Config converts limit DMA orders to DLP",
+    "explanation": "Rules write 1=DLP^104=1^AUNS=1 for SDMA/DMA(/ICEDMA) limit orders starting before the close when USEDLP is 1 (DMA/SDMA) or 2 (incl. ICEDMA).",
+    "sources": [
+     "ai.fixmsg.properties:494",
+     "ai.fixmsg.properties:557"
+    ]
+   },
+   {
+    "id": "REL-9012.1-04",
+    "kind": "conversion",
+    "severity": "medium",
+    "tags": [
+     "9012.1",
+     "9012.88"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1)!=null"
+     },
+     {
+      "field": "tag9012(88)",
+      "op": "=",
+      "value": "MFSIS^PORT^SgaMoc^APSHADOW1^APSHADOW2^APSHADOW3^APSHADOW4^APSHADOW5",
+      "raw": "tag9012(88)=MFSIS^PORT^SgaMoc^APSHADOW1^APSHADOW2^APSHADOW3^APSHADOW4^APSHADOW5"
+     }
+    ],
+    "title": "Client templates keyed on tag 88 rewrite the algorithm",
+    "explanation": "Several rules use the value of sub-tag 88 as a template key and write ALGO=LINE (88=MFSIS), ALGO=PASS (88=PORT with 9001=FALL), ALGO=VWAP (88=SgaMoc) or ALGO=SHADOW (88=APSHADOWn) together with other parameters.",
+    "sources": [
+     "ai.fixmsg.properties:206",
+     "ai.fixmsg.properties:208",
+     "ai.fixmsg.properties:316",
+     "ai.fixmsg.properties:344"
+    ]
+   },
+   {
+    "id": "REL-9012.1-05",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.1"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1)!=null"
+     },
+     {
+      "field": "algorithmValid",
+      "op": "=",
+      "value": "false",
+      "raw": "algorithmValid=false"
+     }
+    ],
+    "title": "Order rejected if final algorithm is invalid",
+    "explanation": "After parsing, an invalid final algorithm sets _err_msg 'invalid algorithm'. Note an invalid sub-tag 1 value is itself ignored, so this only fires when 9001 is also invalid.",
+    "sources": [
+     "Parameters.java:11398"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2990",
+   "Parameters.java:11938",
+   "Parameters.java:12214"
+  ]
+ },
+ {
+  "id": "9012.2",
+  "number": "2",
+  "parent": "9012",
+  "alias": null,
+  "name": "Start time / start offset after open",
+  "category": "schedule",
+  "description": "Order start time. A value ending in s/m/h is an offset from the continuous-session open (e.g. 30s, 5m, 1h) stored as start_open; otherwise it is parsed as a clock time (like 9002) and flagged for timezone conversion. Because 9012 is parsed after 9002, this replaces the 9002 start time.",
+  "valueFormat": "HH:MM:SS | <n>s | <n>m | <n>h",
+  "type": "time",
+  "allowedValues": [],
+  "default": "none (9002 or immediate start)",
+  "example": {
+   "value": "5m",
+   "explanation": "Start 5 minutes after the continuous open."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.2-01",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.2",
+     "9002"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(2)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(2)!=null"
+     },
+     {
+      "field": "fixTag(9002)",
+      "op": "!=",
+      "value": "null",
+      "raw": "fixTag(9002)!=null"
+     }
+    ],
+    "title": "Sub-tag 2 replaces 9002",
+    "explanation": "Both set _startstamp/_tag9002; 9002 is parsed in parse900Tags before 9012, so the 9012 value wins.",
+    "sources": [
+     "Parameters.java:10701",
+     "Parameters.java:3019",
+     "Parameters.java:11288"
+    ]
+   },
+   {
+    "id": "REL-9012.2-02",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.2",
+     "9012.14"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(2)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(2)!=null"
+     },
+     {
+      "field": "start_open",
+      "op": ">",
+      "value": "0",
+      "raw": "start_open>0"
+     }
+    ],
+    "title": "Offset start disables do-open",
+    "explanation": "When the start is an offset after the open (start_open>0) the opening-auction participation computed from 14/9009 is cleared (customtags_open=0), and ExecutionOptimizer sets the start to open+offset.",
+    "sources": [
+     "FlexOrderStream.java:14161",
+     "ExecutionOptimizer.java:649"
+    ]
+   },
+   {
+    "id": "REL-9012.2-03",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.2",
+     "9012.217"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(2)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(2)!=null"
+     },
+     {
+      "field": "tag9012(217)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(217)!=null"
+     },
+     {
+      "field": "start_to_moo",
+      "op": ">",
+      "value": "0",
+      "raw": "start_to_moo>0"
+     }
+    ],
+    "title": "Config clears 217/218/219 when start is before MOO",
+    "explanation": "Rule writes 217=0^218=0^219=0 when 217 is set, tag 2 is present and start_to_moo>0.",
+    "sources": [
+     "ai.fixmsg.properties:101"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:3005",
+   "Parameters.java:3028",
+   "Parameters.java:16615",
+   "ExecutionOptimizer.java:96",
+   "COMPOUND-OPEN-AUCTION-THEN-VWAP.md:54"
+  ]
+ },
+ {
+  "id": "9012.3",
+  "number": "3",
+  "parent": "9012",
+  "alias": null,
+  "name": "End time",
+  "category": "schedule",
+  "description": "Order end time as a clock time (same parsing as 9003), flagged for timezone conversion. Parsed after 9003 so it replaces it. Inside a compound leg (9060) it ends that leg at a clock time.",
+  "valueFormat": "HH:MM:SS",
+  "type": "time",
+  "allowedValues": [],
+  "default": "none (9003 or market close)",
+  "example": {
+   "value": "14:30:00",
+   "explanation": "Stop scheduling at 14:30 local time."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.3-01",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.3",
+     "9003"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(3)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(3)!=null"
+     },
+     {
+      "field": "fixTag(9003)",
+      "op": "!=",
+      "value": "null",
+      "raw": "fixTag(9003)!=null"
+     }
+    ],
+    "title": "Sub-tag 3 replaces 9003",
+    "explanation": "Both set _endstamp/_tag9003; 9003 is parsed first in parse900Tags, so the 9012 value wins.",
+    "sources": [
+     "Parameters.java:10711",
+     "Parameters.java:3032"
+    ]
+   },
+   {
+    "id": "REL-9012.3-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.3",
+     "9012.15"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(3)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(3)!=null"
+     },
+     {
+      "field": "tag9012(15)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(15)=1"
+     },
+     {
+      "field": "endstamp",
+      "op": "<",
+      "value": "closingAuctionEnd",
+      "raw": "endstamp<closingAuctionEnd"
+     },
+     {
+      "field": "reset_close_endstamp",
+      "op": "=",
+      "value": "0",
+      "raw": "reset_close_endstamp=0"
+     }
+    ],
+    "title": "Close tag with early end time is rejected",
+    "explanation": "With 15=1 and an end time before the closing auction end (and reset_close_endstamp==0 for the stock) the order is rejected 'in close tag conflict with endstamp'.",
+    "sources": [
+     "FlexOrderStream.java:13947"
+    ]
+   },
+   {
+    "id": "REL-9012.3-03",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.3",
+     "9012.15"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(3)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(3)!=null"
+     }
+    ],
+    "title": "End time decides close participation in EU/US",
+    "explanation": "In the EU region an end at/after continuous end turns do-close on, an earlier end turns it off (unless moc_rate_type>=20); with 9009 in other regions the end vs closing-auction begin decides close participation.",
+    "sources": [
+     "FlexOrderStream.java:14112",
+     "FlexOrderStream.java:14138"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:3032",
+   "COMPOUND-OPEN-AUCTION-THEN-VWAP.md:47"
+  ]
+ },
+ {
+  "id": "9012.4",
+  "number": "4",
+  "parent": "9012",
+  "alias": null,
+  "name": "Aggression",
+  "category": "algorithm",
+  "description": "Aggressiveness level of the algo in [-1, 1] (negative = more passive, positive = more aggressive). Used throughout candidate sizing and venue logic (e.g. SHADOW with aggression < -0.5 shrinks workable size, NINJA with aggression >= 1 behaves aggressively, qmoc close rate shifts by 20*aggression).",
+  "valueFormat": "number in [-1,1]",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0 (or 9004 alpha for many algos)",
+  "example": {
+   "value": "-0.5",
+   "explanation": "Fairly passive execution."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.4-01",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.4",
+     "9004"
+    ],
+    "algorithms": [
+     "PCAP",
+     "NINJA",
+     "ICENINJA",
+     "SMKT",
+     "IIS",
+     "SHADOW",
+     "SHADOWMIN",
+     "LINE",
+     "WOW",
+     "VWAP",
+     "FALL",
+     "CASH",
+     "GNR",
+     "PASS",
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(4)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(4)!=null"
+     },
+     {
+      "field": "fixTag(9004)",
+      "op": "!=",
+      "value": "null",
+      "raw": "fixTag(9004)!=null"
+     }
+    ],
+    "title": "Sub-tag 4 beats 9004 alpha",
+    "explanation": "parseGreekTags copies 9004 (alpha) into _aggression for these algos; 9012 is parsed afterwards so sub-tag 4 wins.",
+    "sources": [
+     "Parameters.java:10835",
+     "Parameters.java:11288"
+    ]
+   },
+   {
+    "id": "REL-9012.4-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.4"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(4)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(4)!=null"
+     },
+     {
+      "field": "tag9012(4)",
+      "op": "<",
+      "value": "-1",
+      "raw": "tag9012(4)<-1"
+     }
+    ],
+    "title": "Aggression below -1 rejected",
+    "explanation": "checkForError returns 'aggression out of range' when aggression < -1 or > 1.",
+    "sources": [
+     "Parameters.java:12748"
+    ]
+   },
+   {
+    "id": "REL-9012.4-03",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.4"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(4)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(4)!=null"
+     },
+     {
+      "field": "tag9012(4)",
+      "op": ">",
+      "value": "1",
+      "raw": "tag9012(4)>1"
+     }
+    ],
+    "title": "Aggression above 1 rejected",
+    "explanation": "checkForError returns 'aggression out of range' when aggression > 1.",
+    "sources": [
+     "Parameters.java:12748"
+    ]
+   },
+   {
+    "id": "REL-9012.4-04",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.4",
+     "9012.13"
+    ],
+    "algorithms": [
+     "NINJA",
+     "ICENINJA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(4)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(4)!=null"
+     },
+     {
+      "field": "tag9012(4)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(4)>0"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "NINJA^ICENINJA",
+      "raw": "algorithm=NINJA^ICENINJA"
+     },
+     {
+      "field": "doCash",
+      "op": ">",
+      "value": "0",
+      "raw": "doCash>0"
+     }
+    ],
+    "title": "Aggressive NINJA cannot use cash balance",
+    "explanation": "checkForError rejects 'aggressive NINJA with Cash feature' when a NINJA-like algo has aggression>0 and cash balancing is on.",
+    "sources": [
+     "Parameters.java:12817"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1492",
+   "Parameters.java:13457",
+   "Parameters.java:13461",
+   "CandidateProcessor.java:1515",
+   "CandidateProcessor.java:1558",
+   "Parameters.java:16242"
+  ]
+ },
+ {
+  "id": "9012.5",
+  "number": "5",
+  "parent": "9012",
+  "alias": null,
+  "name": "Min participation rate",
+  "category": "participation",
+  "description": "Minimum participation rate in percent of market volume. For SHADOW-family algos it is the minimum rate (9007 delta maps here), for LINE/PART 9005 beta maps here. Validated against configured bounds.",
+  "valueFormat": "percent",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "0 (none); when this tag is absent: GNR conversion defaults 5=8 / 6=25 (Parameters.java:12591)",
+  "example": {
+   "value": "5",
+   "explanation": "Participate at least 5% of volume."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [
+   {
+    "algorithms": [
+     "PART"
+    ],
+    "behavior": "Ignored: minPartLevel() returns the target rate (tag 7) and parse9012 overwrites _minpartlevel with the target."
+   }
+  ],
+  "interactions": [
+   {
+    "id": "REL-9012.5-01",
+    "kind": "ineffective",
+    "severity": "medium",
+    "tags": [
+     "9012.5",
+     "9012.7"
+    ],
+    "algorithms": [
+     "PART"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(5)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(5)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "PART",
+      "raw": "algorithm=PART"
+     }
+    ],
+    "title": "Ignored for PART (target rate used)",
+    "explanation": "After 9012 parsing PART sets min=max=target part level, and minPartLevel() returns _targetpartlevel for PART.",
+    "sources": [
+     "Parameters.java:1474",
+     "Parameters.java:13424"
+    ]
+   },
+   {
+    "id": "REL-9012.5-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.5",
+     "9012.6"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(5)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(5)!=null"
+     },
+     {
+      "field": "tag9012(6)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(6)!=null"
+     },
+     {
+      "field": "js",
+      "op": "js",
+      "value": "tag5 > tag6",
+      "raw": "<js>tag5 > tag6</js>"
+     }
+    ],
+    "title": "Min rate above max rate rejected",
+    "explanation": "checkForError: 'min part level > max part level' when both >0 and min>max.",
+    "sources": [
+     "Parameters.java:12800"
+    ]
+   },
+   {
+    "id": "REL-9012.5-03",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.5",
+     "9012.37"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(5)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(5)!=null"
+     },
+     {
+      "field": "tag9012(5)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(5)>0"
+     },
+     {
+      "field": "tag9012(5)",
+      "op": "<=",
+      "value": "1",
+      "raw": "tag9012(5)<=1"
+     },
+     {
+      "field": "tag9012(37)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(37)=1"
+     }
+    ],
+    "title": "Min rate <=1% cannot be combined with dark only",
+    "explanation": "checkForError rejects a min part level in (0,1] when Dark Only (37=1) is set.",
+    "sources": [
+     "Parameters.java:12809"
+    ]
+   },
+   {
+    "id": "REL-9012.5-04",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.5"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(5)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(5)!=null"
+     },
+     {
+      "field": "tag9012(5)",
+      "op": ">",
+      "value": "minpart_reject",
+      "raw": "tag9012(5)>minpart_reject"
+     }
+    ],
+    "title": "Rate outside configured bounds rejected",
+    "explanation": "Rejected when min part level > min(100, minpart_reject) or below min(1, minpart_reject_min).",
+    "sources": [
+     "Parameters.java:12779",
+     "Parameters.java:12788"
+    ]
+   },
+   {
+    "id": "REL-9012.5-05",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.5",
+     "9012.36"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(5)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(5)!=null"
+     },
+     {
+      "field": "tag9012(5)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(5)>0"
+     },
+     {
+      "field": "tag9012(36)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(36)>0"
+     }
+    ],
+    "title": "BernX-only cannot combine with min part",
+    "explanation": "checkForError: 'BernX-only cannot combine with iwould or min part' when internal cross is 2.",
+    "sources": [
+     "Parameters.java:12839"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1497",
+   "Parameters.java:13424",
+   "Parameters.java:10874",
+   "Parameters.java:11496",
+   "CandidateProcessor.java:1840",
+   "ExchangeMaster.java:872",
+   "Parameters.java:12591"
+  ]
+ },
+ {
+  "id": "9012.6",
+  "number": "6",
+  "parent": "9012",
+  "alias": null,
+  "name": "Max participation rate",
+  "category": "participation",
+  "description": "Maximum participation rate (volume cap) in percent of market volume. 9005 beta (VWAP/TMX/PART/FALL/CASH) or 9007 delta (LINE/PCAP/SMKT/IIS/SMALL/PASS/GNR) map here; sub-tag 6 is parsed later and wins.",
+  "valueFormat": "percent",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "0 (no cap)",
+  "example": {
+   "value": "20",
+   "explanation": "Never exceed 20% of market volume."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [
+   {
+    "algorithms": [
+     "PART"
+    ],
+    "behavior": "Ignored: maxPartLevel() returns the target rate (tag 7)."
+   },
+   {
+    "algorithms": [
+     "WOW"
+    ],
+    "behavior": "Ignored: maxPartLevel() returns tag 16 (max work part rate)."
+   }
+  ],
+  "interactions": [
+   {
+    "id": "REL-9012.6-01",
+    "kind": "ineffective",
+    "severity": "medium",
+    "tags": [
+     "9012.6",
+     "9012.7"
+    ],
+    "algorithms": [
+     "PART"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(6)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(6)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "PART",
+      "raw": "algorithm=PART"
+     }
+    ],
+    "title": "Ignored for PART",
+    "explanation": "maxPartLevel() returns _targetpartlevel for PART and parse9012 overwrites _maxpartlevel with the target.",
+    "sources": [
+     "Parameters.java:1474",
+     "Parameters.java:13359"
+    ]
+   },
+   {
+    "id": "REL-9012.6-02",
+    "kind": "ineffective",
+    "severity": "medium",
+    "tags": [
+     "9012.6",
+     "9012.16"
+    ],
+    "algorithms": [
+     "WOW"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(6)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(6)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "WOW",
+      "raw": "algorithm=WOW"
+     }
+    ],
+    "title": "Ignored for WOW (tag 16 used)",
+    "explanation": "maxPartLevel() returns _maxworkpartrate for WOW.",
+    "sources": [
+     "Parameters.java:13363"
+    ]
+   },
+   {
+    "id": "REL-9012.6-03",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.6"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(6)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(6)!=null"
+     },
+     {
+      "field": "tag9012(6)",
+      "op": ">",
+      "value": "maxpart_reject",
+      "raw": "tag9012(6)>maxpart_reject"
+     }
+    ],
+    "title": "Max rate outside configured bounds rejected",
+    "explanation": "Rejected when > min(100, maxpart_reject) or >0 and < min(1, maxpart_reject_min).",
+    "sources": [
+     "Parameters.java:12758",
+     "Parameters.java:12770"
+    ]
+   },
+   {
+    "id": "REL-9012.6-04",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.6",
+     "9012.23"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(6)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(6)!=null"
+     },
+     {
+      "field": "tag9012(23)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(23)=null"
+     }
+    ],
+    "title": "Max rate disables default must-complete",
+    "explanation": "mustComplete() defaults to the algorithm's default only when maxPartLevel()<=0; setting 6 makes the order not must-complete unless 23=1.",
+    "sources": [
+     "Parameters.java:14093"
+    ]
+   },
+   {
+    "id": "REL-9012.6-05",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.6",
+     "9012.23"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(6)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(6)!=null"
+     },
+     {
+      "field": "maxPartLevel",
+      "op": ">",
+      "value": "0.0001",
+      "raw": "maxPartLevel>0.0001"
+     },
+     {
+      "field": "tag9012(23)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(23)=1"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "C1^C2^CH",
+      "raw": "compositeExchangeCode=C1^C2^CH"
+     }
+    ],
+    "title": "China: volume cap with must-complete is KO'd",
+    "explanation": "Config rule writes KO 'Volume cap ... conflicting with Must Complete 23=1' for China.",
+    "sources": [
+     "ai.fixmsg.properties:450"
+    ]
+   },
+   {
+    "id": "REL-9012.6-06",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.6",
+     "9012.79"
+    ],
+    "algorithms": [
+     "LINE"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(6)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(6)!=null"
+     },
+     {
+      "field": "maxPartLevel",
+      "op": "<",
+      "value": "1",
+      "raw": "maxPartLevel<1"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "LINE",
+      "raw": "algorithm=LINE"
+     },
+     {
+      "field": "indexTrackerAdaptionStr",
+      "op": "=",
+      "value": "1^2^5^6",
+      "raw": "indexTrackerAdaptionStr=1^2^5^6"
+     }
+    ],
+    "title": "Config defaults 6=50 for adaptive LINE",
+    "explanation": "LINE with index-tracker adaption 1/2/5/6 and no max rate gets 6=50.",
+    "sources": [
+     "ai.fixmsg.properties:43"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1502",
+   "Parameters.java:13359",
+   "Parameters.java:10838",
+   "CandidateRegulator.java:475",
+   "CandidateRegulator.java:906",
+   "AI-FIXMSG-CONFLICTS.md:84"
+  ]
+ },
+ {
+  "id": "9012.7",
+  "number": "7",
+  "parent": "9012",
+  "alias": null,
+  "name": "Target participation rate",
+  "category": "participation",
+  "description": "Target participation rate in percent. For PART it is the participation rate (min and max are both set to it); for PART2 it sets the lit target rate instead. For other algos it sets targetPartLevel (also used as the default MOC part level).",
+  "valueFormat": "percent",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "10",
+   "explanation": "PART: participate at 10% of volume."
+  },
+  "appliesTo": [
+   "PART",
+   "PART2",
+   "ALL"
+  ],
+  "algorithmDependent": [
+   {
+    "algorithms": [
+     "PART"
+    ],
+    "behavior": "Sets the participation rate; min=max=target after parsing; 9005 beta also maps here."
+   },
+   {
+    "algorithms": [
+     "PART2"
+    ],
+    "behavior": "Sets the lit target rate (_targetlitpartlevel); min/max lit = target; halved for small caps / large %ADV (see 58/61)."
+   }
+  ],
+  "interactions": [
+   {
+    "id": "REL-9012.7-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.7"
+    ],
+    "algorithms": [
+     "PART"
+    ],
+    "trigger": [
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "PART",
+      "raw": "algorithm=PART"
+     },
+     {
+      "field": "tag9012(7)",
+      "op": "<=",
+      "value": "0",
+      "raw": "tag9012(7)<=0"
+     }
+    ],
+    "title": "PART without a positive rate rejected",
+    "explanation": "checkForError: 'part rate <= 0' when PART and minPartLevel()<=0 (which is the target).",
+    "sources": [
+     "Parameters.java:12797"
+    ]
+   },
+   {
+    "id": "REL-9012.7-02",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.7",
+     "9012.5",
+     "9012.6"
+    ],
+    "algorithms": [
+     "PART"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(7)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(7)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "PART",
+      "raw": "algorithm=PART"
+     }
+    ],
+    "title": "PART target replaces min/max",
+    "explanation": "parse9012 sets _maxpartlevel=_minpartlevel=_targetpartlevel for PART (and lit levels for PART2).",
+    "sources": [
+     "Parameters.java:1473"
+    ]
+   },
+   {
+    "id": "REL-9012.7-03",
+    "kind": "incompatible",
+    "severity": "low",
+    "tags": [
+     "9012.7",
+     "9012.1"
+    ],
+    "algorithms": [
+     "PART2"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(7)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(7)!=null"
+     },
+     {
+      "field": "tag9012(1)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1)!=null"
+     }
+    ],
+    "title": "Meaning depends on algorithm at parse time",
+    "explanation": "__p_7 checks _algorithm == PART2 while parsing; the lit vs non-lit field chosen depends on the algorithm in effect when tag 7 is read.",
+    "sources": [
+     "Parameters.java:1521"
+    ]
+   },
+   {
+    "id": "REL-9012.7-04",
+    "kind": "rewrite",
+    "severity": "low",
+    "tags": [
+     "9012.7"
+    ],
+    "algorithms": [
+     "VWAP"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(7)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(7)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "IN",
+      "raw": "compositeExchangeCode=IN"
+     },
+     {
+      "field": "fixTag(9001)",
+      "op": "=",
+      "value": "IIS",
+      "raw": "fixTag(9001)=IIS"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "VWAP",
+      "raw": "algorithm=VWAP"
+     },
+     {
+      "field": "targetPartLevel",
+      "op": ">",
+      "value": "0",
+      "raw": "targetPartLevel>0"
+     }
+    ],
+    "title": "India IIS->VWAP clears target",
+    "explanation": "Config rule writes 7=0 for IN orders whose 9001 is IIS but run as VWAP with a target rate.",
+    "sources": [
+     "ai.fixmsg.properties:268"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1521",
+   "Parameters.java:13449",
+   "Parameters.java:10894",
+   "Parameters.java:12584",
+   "Parameters.java:14463"
+  ]
+ },
+ {
+  "id": "9012.8",
+  "number": "8",
+  "parent": "9012",
+  "alias": null,
+  "name": "Participation range",
+  "category": "participation",
+  "description": "Allowed band around the target participation rate (percent). For PART sets partRange; for PART2 sets the lit part range. 9004 alpha maps here for PART/PART2.",
+  "valueFormat": "percent",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "2",
+   "explanation": "Allow +/-2% around the target rate."
+  },
+  "appliesTo": [
+   "PART",
+   "PART2"
+  ],
+  "algorithmDependent": [
+   {
+    "algorithms": [
+     "PART2"
+    ],
+    "behavior": "Sets _litpartrange; halved together with lit rates for small caps / large %ADV."
+   }
+  ],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1530",
+   "Parameters.java:10894",
+   "CandidateRegulator.java:925",
+   "oeo/ConcertStrategy.java:4020",
+   "Parameters.java:12589"
+  ]
+ },
+ {
+  "id": "9012.9",
+  "number": "9",
+  "parent": "9012",
+  "alias": null,
+  "name": "Max lit participation rate",
+  "category": "participation",
+  "description": "Maximum participation rate on lit venues (percent). For NINJA/ICENINJA 9006 gamma maps here; for PART2 9005 beta maps here (and tag 7 overwrites it). Used to cap lit shares per period.",
+  "valueFormat": "percent",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "0 (no cap)",
+  "example": {
+   "value": "10",
+   "explanation": "At most 10% of volume on lit venues."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.9-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.9",
+     "9012.6"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(9)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(9)!=null"
+     },
+     {
+      "field": "tag9012(6)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(6)!=null"
+     },
+     {
+      "field": "js",
+      "op": "js",
+      "value": "tag9 > tag6",
+      "raw": "<js>tag9 > tag6</js>"
+     }
+    ],
+    "title": "Lit max above max rate rejected",
+    "explanation": "checkForError: 'max lit part level > max part level'.",
+    "sources": [
+     "Parameters.java:12803"
+    ]
+   },
+   {
+    "id": "REL-9012.9-02",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.9"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(9)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(9)!=null"
+     },
+     {
+      "field": "tag9012(9)",
+      "op": ">",
+      "value": "maxpart_reject",
+      "raw": "tag9012(9)>maxpart_reject"
+     }
+    ],
+    "title": "Out of bounds rejected",
+    "explanation": "Rejected when > min(100,maxpart_reject) or >0 and too small.",
+    "sources": [
+     "Parameters.java:12755",
+     "Parameters.java:12767"
+    ]
+   },
+   {
+    "id": "REL-9012.9-03",
+    "kind": "ineffective",
+    "severity": "low",
+    "tags": [
+     "9012.9",
+     "9012.7"
+    ],
+    "algorithms": [
+     "PART2"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(9)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(9)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "PART2",
+      "raw": "algorithm=PART2"
+     }
+    ],
+    "title": "PART2: replaced by lit target",
+    "explanation": "parse9012 sets _maxlitpartlevel=_targetlitpartlevel for PART2.",
+    "sources": [
+     "Parameters.java:1478"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1511",
+   "Parameters.java:13404",
+   "Parameters.java:10841",
+   "CandidateProcessor.java:918",
+   "CandidateRegulator.java:956"
+  ]
+ },
+ {
+  "id": "9012.10",
+  "number": "10",
+  "parent": "9012",
+  "alias": null,
+  "name": "Would price (I-would)",
+  "category": "would",
+  "description": "Opportunistic 'would' price: when the market reaches it the algo trades more aggressively. Accepts an absolute price, or a relative spec parsed by IWouldPrice (e.g. B<bps> / C<cps> offsets as in 'B-10,3'). A value starting with 'M' and containing at least 3 ':'-separated fields is a multiple-would spec for the scheduler (mult_iwouldpmode=1). Ignored for WOW algos (non-M values).",
+  "valueFormat": "<price> | B<bps>[,..] | C<cps>[,..] | M:...:...",
+  "type": "price",
+  "allowedValues": [],
+  "default": "none (WOW: wow_default_wouldstr; SMKT: B-6); when this tag is absent: APIH: would % without 10/31 KO'd (ai.fixmsg.properties:475)",
+  "example": {
+   "value": "B-10,3",
+   "explanation": "Would trigger 10 bps better than the reference (rule used in SSGA template)."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [
+   {
+    "algorithms": [
+     "WOW"
+    ],
+    "behavior": "Plain values ignored; WOW uses 9007/tag 17 bps or config default."
+   },
+   {
+    "algorithms": [
+     "SMKT"
+    ],
+    "behavior": "Defaults to B-6 if no would price given."
+   }
+  ],
+  "interactions": [
+   {
+    "id": "REL-9012.10-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.10"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(10)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(10)!=null"
+     },
+     {
+      "field": "iwouldPriceValid",
+      "op": "=",
+      "value": "false",
+      "raw": "iwouldPriceValid=false"
+     }
+    ],
+    "title": "Unparseable would price rejected",
+    "explanation": "parametersFinalProcess sets 'incorrect iwould price tag' when IWouldPrice parsing is invalid.",
+    "sources": [
+     "Parameters.java:12040"
+    ]
+   },
+   {
+    "id": "REL-9012.10-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.10",
+     "9012.13"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(10)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(10)!=null"
+     },
+     {
+      "field": "doCash",
+      "op": ">",
+      "value": "0",
+      "raw": "doCash>0"
+     }
+    ],
+    "title": "Cash balance cannot combine with would",
+    "explanation": "checkForError: 'cash-balance cannot combine with iwould'.",
+    "sources": [
+     "Parameters.java:12828"
+    ]
+   },
+   {
+    "id": "REL-9012.10-03",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.10",
+     "9012.36"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(10)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(10)!=null"
+     },
+     {
+      "field": "tag9012(36)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(36)>0"
+     }
+    ],
+    "title": "BernX-only cannot combine with would",
+    "explanation": "checkForError rejects internal cross 2 with a would price.",
+    "sources": [
+     "Parameters.java:12839"
+    ]
+   },
+   {
+    "id": "REL-9012.10-04",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.10",
+     "9012.31",
+     "9012.17"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(10)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(10)!=null"
+     },
+     {
+      "field": "tag9012(31)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(31)!=null"
+     }
+    ],
+    "title": "Explicit would price beats range tags 17/31",
+    "explanation": "The range (17/31) is only used to build the would string when 10 is not set.",
+    "sources": [
+     "Parameters.java:12017"
+    ]
+   },
+   {
+    "id": "REL-9012.10-05",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.10",
+     "9012.11",
+     "9012.207"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(10)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(10)!=null"
+     },
+     {
+      "field": "tag9012(207)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(207)!=null"
+     },
+     {
+      "field": "tag9012(11)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(11)=null"
+     }
+    ],
+    "title": "With 207, would venue becomes dark+lit",
+    "explanation": "If would-dark price 207 is given and 11 is not, tag 10 present makes the would venue 3 (dark and lit), otherwise 1 (dark only).",
+    "sources": [
+     "Parameters.java:1172"
+    ]
+   },
+   {
+    "id": "REL-9012.10-06",
+    "kind": "ineffective",
+    "severity": "medium",
+    "tags": [
+     "9012.10"
+    ],
+    "algorithms": [
+     "WOW"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(10)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(10)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "WOW",
+      "raw": "algorithm=WOW"
+     }
+    ],
+    "title": "Ignored for WOW",
+    "explanation": "__p_10 only stores non-M values when !_algorithm.isWOW().",
+    "sources": [
+     "Parameters.java:1553"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1546",
+   "Parameters.java:11967",
+   "Parameters.java:12027",
+   "Parameters.java:12706",
+   "AlgorithmDispatcher.java:184",
+   "ai.fixmsg.properties:475"
+  ]
+ },
+ {
+  "id": "9012.11",
+  "number": "11",
+  "parent": "9012",
+  "alias": "WD",
+  "name": "Would venue (would dark)",
+  "category": "would",
+  "description": "Where would executions may go: 0/lit = lit only (default), 1/dark = dark, 2 = dark+hidden, 3/darklit/litdark = dark+hidden+visible; 4,5,6 choose between levels by stock size: 4 = 1 or 2, 5 = 2 or 3, 6 = 1 or 3, using ',<T|A|C>,<value>' (T: ADV traded value >= value*1e6; A: order/ADV <= value%; C: market cap USD >= value*1000) to decide 'large cap'. Ignored for WOW.",
+  "valueFormat": "<0-6|dark|lit|darklit|litdark>[,<T|A|C>,<threshold>]",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "lit only"
+   },
+   {
+    "value": "1",
+    "meaning": "dark"
+   },
+   {
+    "value": "2",
+    "meaning": "dark+hidden"
+   },
+   {
+    "value": "3",
+    "meaning": "dark+hidden+visible"
+   },
+   {
+    "value": "4",
+    "meaning": "1 or 2 by size"
+   },
+   {
+    "value": "5",
+    "meaning": "2 or 3 by size"
+   },
+   {
+    "value": "6",
+    "meaning": "1 or 3 by size"
+   }
+  ],
+  "default": "0 (PART2 forces 1); when this tag is absent: PART2 defaults to dark (Parameters.java:12576)",
+  "example": {
+   "value": "5,A,1",
+   "explanation": "Dark+hidden; also visible if order is <= 1% of ADV."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.11-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.11"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(11)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(11)!=null"
+     },
+     {
+      "field": "tag9012(11)",
+      "op": "!~",
+      "value": "^([0-9].*|dark|lit|darklit|litdark)$",
+      "raw": "tag9012(11)!~^([0-9].*|dark|lit|darklit|litdark)$"
+     }
+    ],
+    "title": "Invalid text value rejected",
+    "explanation": "parseWDCompatible sets _err_msg 'invalid would dark tag 11' for unknown words.",
+    "sources": [
+     "Parameters.java:1147"
+    ]
+   },
+   {
+    "id": "REL-9012.11-02",
+    "kind": "ineffective",
+    "severity": "medium",
+    "tags": [
+     "9012.11"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(11)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(11)!=null"
+     },
+     {
+      "field": "regSHO",
+      "op": "=",
+      "value": "true",
+      "raw": "regSHO=true"
+     },
+     {
+      "field": "enforceRegSHO",
+      "op": "=",
+      "value": "3",
+      "raw": "enforceRegSHO=3"
+     }
+    ],
+    "title": "Disabled under Reg SHO enforcement 3",
+    "explanation": "wouldVenue() returns 0 when the stock enforces Reg SHO mode 3 and the order is Reg SHO.",
+    "sources": [
+     "Parameters.java:13549"
+    ]
+   },
+   {
+    "id": "REL-9012.11-03",
+    "kind": "ineffective",
+    "severity": "medium",
+    "tags": [
+     "9012.11"
+    ],
+    "algorithms": [
+     "WOW"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(11)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(11)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "WOW",
+      "raw": "algorithm=WOW"
+     }
+    ],
+    "title": "Ignored for WOW",
+    "explanation": "__p_11_WD only applies when !_algorithm.isWOW().",
+    "sources": [
+     "Parameters.java:1630"
+    ]
+   },
+   {
+    "id": "REL-9012.11-04",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.11",
+     "9012.383"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(11)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(11)!=null"
+     },
+     {
+      "field": "tag9012(11)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(11)=1"
+     },
+     {
+      "field": "tag9012(383)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(383)!=null"
+     }
+    ],
+    "title": "Config KO: 383 with would dark",
+    "explanation": "Rule writes KO '383 With WouldDark'.",
+    "sources": [
+     "ai.fixmsg.properties:554"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1630",
+   "Parameters.java:1124",
+   "Parameters.java:1132",
+   "Parameters.java:1172",
+   "OPEScheduler.java:307",
+   "Parameters.java:12576"
+  ]
+ },
+ {
+  "id": "9012.13",
+  "number": "13",
+  "parent": "9012",
+  "alias": "C",
+  "name": "Cash balance",
+  "category": "compound",
+  "description": "Turns cash (dollar) balancing across the buy and sell legs of a basket on (>0) or off. Forced to 1 for CASH, FALL and PAIR algos and for any pair order (tag 44), and by tags 20/22.",
+  "valueFormat": "0|1",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0 (1 for CASH/FALL/PAIR)",
+  "example": {
+   "value": "1",
+   "explanation": "Balance buy and sell notional across the portfolio."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.13-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.13",
+     "9012.10"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(13)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(13)>0"
+     },
+     {
+      "field": "tag9012(10)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(10)!=null"
+     }
+    ],
+    "title": "Cash balance with would rejected",
+    "explanation": "checkForError: 'cash-balance cannot combine with iwould'.",
+    "sources": [
+     "Parameters.java:12828"
+    ]
+   },
+   {
+    "id": "REL-9012.13-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.13",
+     "9012.36"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(13)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(13)>0"
+     },
+     {
+      "field": "tag9012(36)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(36)>0"
+     }
+    ],
+    "title": "Cash balance with BernX-only rejected",
+    "explanation": "checkForError: 'cash-balance cannot combine with BernX only'.",
+    "sources": [
+     "Parameters.java:12832"
+    ]
+   },
+   {
+    "id": "REL-9012.13-03",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.13"
+    ],
+    "algorithms": [
+     "CASH",
+     "FALL",
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(13)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(13)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "CASH^FALL^PAIR",
+      "raw": "algorithm=CASH^FALL^PAIR"
+     }
+    ],
+    "title": "Forced on for CASH/FALL/PAIR",
+    "explanation": "parametersFinalProcess sets _do_cash=1 when algorithm.needDoCash() or isPair(); 13=0 is overridden.",
+    "sources": [
+     "Parameters.java:11986",
+     "Algorithm.java:219"
+    ]
+   },
+   {
+    "id": "REL-9012.13-04",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.13"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(13)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(13)>0"
+     }
+    ],
+    "title": "Disables relay algos, split and 100-share block",
+    "explanation": "computeRelayAlgorithm/adjustRelayAlgorithm return early when doCash()>0 (no relay/split); block_first_100_shares() returns 0.",
+    "sources": [
+     "Parameters.java:11144",
+     "Parameters.java:10988",
+     "Parameters.java:14941"
+    ]
+   },
+   {
+    "id": "REL-9012.13-05",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.13"
+    ],
+    "algorithms": [
+     "FALL"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(13)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(13)!=null"
+     },
+     {
+      "field": "fixTag(9001)",
+      "op": "=",
+      "value": "FALL",
+      "raw": "fixTag(9001)=FALL"
+     },
+     {
+      "field": "tag9012(88)",
+      "op": "=",
+      "value": "PORT",
+      "raw": "tag9012(88)=PORT"
+     }
+    ],
+    "title": "PORT template sets PASS + cash",
+    "explanation": "Rule writes ALGO=PASS^13=1^37=0 for 9001=FALL with 88=PORT.",
+    "sources": [
+     "ai.fixmsg.properties:208"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1723",
+   "Parameters.java:13929",
+   "Parameters.java:13944",
+   "CandidateProcessor.java:621"
+  ]
+ },
+ {
+  "id": "9012.14",
+  "number": "14",
+  "parent": "9012",
+  "alias": null,
+  "name": "Do open auction",
+  "category": "auction-open",
+  "description": "Participate in the opening auction. >0 sets doOpen to that value (1 normal; 2 is also accepted as doOpen and used e.g. for market orders); 0 explicitly excludes the open; default -1 = unspecified (inferred from 9009 and timing). Only sets doOpen when >0, so 14=0 does not clear a doOpen from 9009 but does block inference.",
+  "valueFormat": "-1|0|1|2",
+  "type": "int",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "no open auction"
+   },
+   {
+    "value": "1",
+    "meaning": "do open"
+   },
+   {
+    "value": "2",
+    "meaning": "do open (variant; market order handling)"
+   }
+  ],
+  "default": "-1 (unspecified); when this tag is absent: Config sets 14=0 when 9002 is after earliest open auction (ai.fixmsg.properties:309, ai.fixmsg.properties:24, ai.fixmsg.properties:25)",
+  "example": {
+   "value": "1",
+   "explanation": "Send to the opening auction if the order arrives before the open."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.14-01",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.14",
+     "9009"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(14)",
+      "op": "=",
+      "value": "-1",
+      "raw": "tag9012(14)=-1"
+     },
+     {
+      "field": "fixTag(9009)",
+      "op": "!=",
+      "value": "null",
+      "raw": "fixTag(9009)!=null"
+     }
+    ],
+    "title": "Unspecified 14 defers to 9009",
+    "explanation": "In EU/AP, inOpen9014==-1 with 9009 present uses doOpen from 9009 (9009=1/3).",
+    "sources": [
+     "FlexOrderStream.java:14095",
+     "FlexOrderStream.java:14122",
+     "Parameters.java:10683"
+    ]
+   },
+   {
+    "id": "REL-9012.14-02",
+    "kind": "rewrite",
+    "severity": "medium",
+    "tags": [
+     "9012.14",
+     "9012.92"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(14)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(14)!=null"
+     },
+     {
+      "field": "tag9012(92)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(92)!=null"
+     },
+     {
+      "field": "tag9012(92)",
+      "op": "~",
+      "value": "^H?O",
+      "raw": "tag9012(92)~^H?O"
+     }
+    ],
+    "title": "Open-referenced limit better than open clears do-open",
+    "explanation": "If tag 92 references the open (O) with negative percent/ticks, _inopen9014 is set to 0.",
+    "sources": [
+     "Parameters.java:1939"
+    ]
+   },
+   {
+    "id": "REL-9012.14-03",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.14",
+     "9012.36"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(14)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(14)>0"
+     },
+     {
+      "field": "tag9012(36)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(36)>0"
+     }
+    ],
+    "title": "BernX-only cannot do open",
+    "explanation": "checkForErrorFinal: 'BernX-only cannot combine with do open'.",
+    "sources": [
+     "Parameters.java:12932"
+    ]
+   },
+   {
+    "id": "REL-9012.14-04",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.14",
+     "9012.2"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(14)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(14)>0"
+     },
+     {
+      "field": "reject_start_after_open",
+      "op": "=",
+      "value": "1^3",
+      "raw": "reject_start_after_open=1^3"
+     }
+    ],
+    "title": "Do-open with start after open rejected (config)",
+    "explanation": "With reject_start_after_open 1/3, a do-open order whose start time is after continuous begin is rejected.",
+    "sources": [
+     "FlexOrderStream.java:14072"
+    ]
+   },
+   {
+    "id": "REL-9012.14-05",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.14",
+     "9012.217",
+     "9012.218"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(14)",
+      "op": "=",
+      "value": "0",
+      "raw": "tag9012(14)=0"
+     },
+     {
+      "field": "tag9012(217)",
+      "op": "!=",
+      "value": "null^0",
+      "raw": "tag9012(217)!=null^0"
+     },
+     {
+      "field": "tag9012(218)",
+      "op": "!=",
+      "value": "null^0",
+      "raw": "tag9012(218)!=null^0"
+     },
+     {
+      "field": "algoEnv",
+      "op": "!=",
+      "value": "APIL^APIM",
+      "raw": "algoEnv!=APIL^APIM"
+     }
+    ],
+    "title": "Config KO: 217/218 with 14=0",
+    "explanation": "Rule KO 'Tag 217 and 218 coexist with tag 14=0'.",
+    "sources": [
+     "ai.fixmsg.properties:513"
+    ]
+   },
+   {
+    "id": "REL-9012.14-06",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.14",
+     "9012.2"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(14)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(14)>0"
+     },
+     {
+      "field": "start_open",
+      "op": ">",
+      "value": "0",
+      "raw": "start_open>0"
+     }
+    ],
+    "title": "Offset start (tag 2 s/m/h) cancels do-open",
+    "explanation": "customtags_open is reset to 0 when start_open>0.",
+    "sources": [
+     "FlexOrderStream.java:14161"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1833",
+   "Parameters.java:13649",
+   "Parameters.java:13897",
+   "ExecutionCustomizer.java:47",
+   "FlexOrderStream.java:14171",
+   "AI-FIXMSG-CONFLICTS.md:102",
+   "ai.fixmsg.properties:309",
+   "ai.fixmsg.properties:24",
+   "ai.fixmsg.properties:25"
+  ]
+ },
+ {
+  "id": "9012.15",
+  "number": "15",
+  "parent": "9012",
+  "alias": null,
+  "name": "Do close auction",
+  "category": "auction-close",
+  "description": "Participate in the closing auction. >0 sets doClose to that value; 0 explicitly excludes the close; default -1 = unspecified (inferred: e.g. US scheduled market orders ending at the close, IIS). Send exactly 1: the auction gate tests doClose()==1, so 15=2 passes entry checks but silently fails at the auction. Close size also needs moc_mode (232) and a reserve (26/27).",
+  "valueFormat": "-1|0|1",
+  "type": "int",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "no close auction"
+   },
+   {
+    "value": "1",
+    "meaning": "do close"
+   }
+  ],
+  "default": "-1 (unspecified); when this tag is absent: HK short sell sets 15 by algo (ai.fixmsg.properties:135, ai.fixmsg.properties:136)",
+  "example": {
+   "value": "1",
+   "explanation": "Reserve shares for and send to the closing auction."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.15-01",
+    "kind": "incompatible",
+    "severity": "high",
+    "tags": [
+     "9012.15"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(15)",
+      "op": ">",
+      "value": "1",
+      "raw": "tag9012(15)>1"
+     }
+    ],
+    "title": "15=2+ never reaches the close",
+    "explanation": "ExecutionCustomizer requires doClose()==1 for close candidates ('source_not_doclose').",
+    "sources": [
+     "ExecutionCustomizer.java:77",
+     "CLOSE-AUCTION-RUNBOOK.md:43"
+    ]
+   },
+   {
+    "id": "REL-9012.15-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.15",
+     "9012.3"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(15)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(15)=1"
+     },
+     {
+      "field": "tag9012(3)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(3)!=null"
+     },
+     {
+      "field": "endstamp",
+      "op": "<",
+      "value": "closingAuctionEnd",
+      "raw": "endstamp<closingAuctionEnd"
+     },
+     {
+      "field": "reset_close_endstamp",
+      "op": "=",
+      "value": "0",
+      "raw": "reset_close_endstamp=0"
+     }
+    ],
+    "title": "15=1 with early end time rejected",
+    "explanation": "'in close tag conflict with endstamp'.",
+    "sources": [
+     "FlexOrderStream.java:13947"
+    ]
+   },
+   {
+    "id": "REL-9012.15-03",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.15"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(15)",
+      "op": "=",
+      "value": "0",
+      "raw": "tag9012(15)=0"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "JP^IN",
+      "raw": "compositeExchangeCode=JP^IN"
+     },
+     {
+      "field": "start_to_close",
+      "op": ">=",
+      "value": "0",
+      "raw": "start_to_close>=0"
+     }
+    ],
+    "title": "JP/IN: 15=0 after continuous end KO'd",
+    "explanation": "Config KO '9012tag 15 0 after continuous end'.",
+    "sources": [
+     "ai.fixmsg.properties:263"
+    ]
+   },
+   {
+    "id": "REL-9012.15-04",
+    "kind": "rewrite",
+    "severity": "medium",
+    "tags": [
+     "9012.15"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(15)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(15)!=null"
+     },
+     {
+      "field": "has9009",
+      "op": "=",
+      "value": "0",
+      "raw": "has9009=0"
+     },
+     {
+      "field": "inClose9015",
+      "op": "=",
+      "value": "-1",
+      "raw": "inClose9015=-1"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "AU^SP^KS^TT^MK^JP^IJ^TB^PM^NZ^C1^C2^HK^CH",
+      "raw": "compositeExchangeCode=AU^SP^KS^TT^MK^JP^IJ^TB^PM^NZ^C1^C2^HK^CH"
+     }
+    ],
+    "title": "APAC default 15=1 when unspecified",
+    "explanation": "Rule writes 15=1 when neither 9009 nor 15 was given in most Asian markets (fields flagged as possibly unsupported, C-19).",
+    "sources": [
+     "ai.fixmsg.properties:48",
+     "AI-FIXMSG-CONFLICTS.md:55"
+    ]
+   },
+   {
+    "id": "REL-9012.15-05",
+    "kind": "rewrite",
+    "severity": "medium",
+    "tags": [
+     "9012.15",
+     "9012.10",
+     "9012.31"
+    ],
+    "algorithms": [
+     "SHADOW"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(15)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(15)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "SHADOW",
+      "raw": "algorithm=SHADOW"
+     },
+     {
+      "field": "minPartLevel",
+      "op": "<",
+      "value": "0.0001",
+      "raw": "minPartLevel<0.0001"
+     },
+     {
+      "field": "tag9012(10)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(10)=null"
+     },
+     {
+      "field": "tag9012(31)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(31)=null"
+     }
+    ],
+    "title": "SHADOW without would/min rate: 15=0",
+    "explanation": "Rule writes 15=0.",
+    "sources": [
+     "ai.fixmsg.properties:251"
+    ]
+   },
+   {
+    "id": "REL-9012.15-06",
+    "kind": "conversion",
+    "severity": "medium",
+    "tags": [
+     "9012.15"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(15)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(15)=1"
+     },
+     {
+      "field": "now",
+      "op": ">=",
+      "value": "continuousEnd",
+      "raw": "now>=continuousEnd"
+     }
+    ],
+    "title": "After continuous end converts to MOC",
+    "explanation": "Orders arriving after continuous end with inClose9015==1 (or unspecified without 9009) are converted via setEUMOCAfterClose (unless SHADOW-with-min-rate, MOC, test, or excluded).",
+    "sources": [
+     "FlexOrderStream.java:13959"
+    ]
+   },
+   {
+    "id": "REL-9012.15-07",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.15",
+     "9009"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(15)",
+      "op": "=",
+      "value": "-1",
+      "raw": "tag9012(15)=-1"
+     },
+     {
+      "field": "fixTag(9009)",
+      "op": "!=",
+      "value": "null",
+      "raw": "fixTag(9009)!=null"
+     }
+    ],
+    "title": "Unspecified 15 defers to 9009",
+    "explanation": "inClose9015==-1 with 9009 uses doClose from 9009 (2/3).",
+    "sources": [
+     "FlexOrderStream.java:14103",
+     "FlexOrderStream.java:14127"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1838",
+   "Parameters.java:13668",
+   "Parameters.java:13901",
+   "FlexOrderStream.java:14192",
+   "CLOSE-AUCTION-RUNBOOK.md:37",
+   "AI-FIXMSG-CONFLICTS.md:66",
+   "ai.fixmsg.properties:135",
+   "ai.fixmsg.properties:136"
+  ]
+ },
+ {
+  "id": "9012.16",
+  "number": "16",
+  "parent": "9012",
+  "alias": null,
+  "name": "Max work participation rate (WOW)",
+  "category": "participation",
+  "description": "Maximum participation rate for the WOW algorithm (percent); maxPartLevel() returns it for WOW. 9005 beta maps here for WOW.",
+  "valueFormat": "percent",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "15",
+   "explanation": "WOW: cap working at 15% of volume."
+  },
+  "appliesTo": [
+   "WOW"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.16-01",
+    "kind": "ineffective",
+    "severity": "low",
+    "tags": [
+     "9012.16"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(16)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(16)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "!=",
+      "value": "WOW",
+      "raw": "algorithm!=WOW"
+     }
+    ],
+    "title": "Only used by WOW",
+    "explanation": "maxPartLevel() returns _maxworkpartrate only for WOW; other algos ignore it.",
+    "sources": [
+     "Parameters.java:13363"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1516",
+   "Parameters.java:13359",
+   "Parameters.java:10908"
+  ]
+ },
+ {
+  "id": "9012.17",
+  "number": "17",
+  "parent": "9012",
+  "alias": null,
+  "name": "Would range (WOW)",
+  "category": "would",
+  "description": "Would-price offset for WOW algos: builds the would string B<value> (bps, default) or C<value> if tag 18 starts with C, and sets the WOW bps when in bps. Ignored for non-WOW algos (use tag 31 there).",
+  "valueFormat": "number (bps or cps per tag 18)",
+  "type": "float",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "-5",
+   "explanation": "WOW: would at 5 bps."
+  },
+  "appliesTo": [
+   "WOW"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.17-01",
+    "kind": "ineffective",
+    "severity": "low",
+    "tags": [
+     "9012.17",
+     "9012.31"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(17)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(17)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "!=",
+      "value": "WOW",
+      "raw": "algorithm!=WOW"
+     }
+    ],
+    "title": "Ignored for non-WOW",
+    "explanation": "__p_17 only stores the value when isWOW(); tag 31 is the non-WOW equivalent.",
+    "sources": [
+     "Parameters.java:1614"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1614",
+   "Parameters.java:12017",
+   "Parameters.java:12037"
+  ]
+ },
+ {
+  "id": "9012.18",
+  "number": "18",
+  "parent": "9012",
+  "alias": null,
+  "name": "Would range unit",
+  "category": "would",
+  "description": "Unit for the would range in tags 17/31: a value starting with C means cents (C<range>), anything else bps (B<range>).",
+  "valueFormat": "B|C",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "B",
+    "meaning": "basis points"
+   },
+   {
+    "value": "C",
+    "meaning": "cents per share"
+   }
+  ],
+  "default": "B (bps)",
+  "example": {
+   "value": "C",
+   "explanation": "Interpret tag 31 as cents."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.18-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.18",
+     "9012.31",
+     "9012.17"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(18)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(18)!=null"
+     },
+     {
+      "field": "tag9012(31)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(31)=null"
+     },
+     {
+      "field": "tag9012(17)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(17)=null"
+     }
+    ],
+    "title": "Needs 17 or 31",
+    "explanation": "Only read when building the would string from _iwould_range.",
+    "sources": [
+     "Parameters.java:12018"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1626",
+   "Parameters.java:12020"
+  ]
+ },
+ {
+  "id": "9012.19",
+  "number": "19",
+  "parent": "9012",
+  "alias": "WP",
+  "name": "Would percentage",
+  "category": "would",
+  "description": "Caps how much of the order may execute via would logic. Number = percent of order (values >100 treated as shares); suffix S = shares (converted to percent, sizes rounded up to lot); prefix C = cumulative mode (counts all executions), R = mode 2 (value capped at 100, percentage caps in OrderRegulation not applied).",
+  "valueFormat": "[C|R]<number>[S]",
+  "type": "string",
+  "allowedValues": [],
+  "default": "none (100%)",
+  "example": {
+   "value": "C33",
+   "explanation": "Would executions limited so total fills <= 33% of order (rule in TROWE template)."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.19-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.19",
+     "9012.10"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(19)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(19)!=null"
+     },
+     {
+      "field": "tag9012(10)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(10)=null"
+     },
+     {
+      "field": "tag9012(31)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(31)=null"
+     }
+    ],
+    "title": "Needs a would price",
+    "explanation": "The percentage limits would executions; config KO's would % without 10/31 under APIH.",
+    "sources": [
+     "ai.fixmsg.properties:475"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1636",
+   "Parameters.java:1647",
+   "OrderRegulation.java:378",
+   "OrderRegulation.java:431",
+   "AI-FIXMSG-CONFLICTS.md:97"
+  ]
+ },
+ {
+  "id": "9012.20",
+  "number": "20",
+  "parent": "9012",
+  "alias": "BSR",
+  "name": "Buy/sell cash ratio",
+  "category": "compound",
+  "description": "Target buy/sell notional ratio for cash balancing; setting it forces cash balancing on (do_cash=1). For CASH, 9006 gamma maps here. Also switches sector balance doSector() to 1 when tag 91>0.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0 (initial ratio)",
+  "example": {
+   "value": "1",
+   "explanation": "Keep buy and sell notional equal."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.20-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.20",
+     "9012.13"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(20)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(20)!=null"
+     }
+    ],
+    "title": "Forces cash balance on",
+    "explanation": "__p_20_BSR sets _do_cash=1, which also triggers the cash-balance rejects with would/BernX.",
+    "sources": [
+     "Parameters.java:1764",
+     "Parameters.java:12828"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1764",
+   "Parameters.java:10917",
+   "Parameters.java:13953",
+   "OrderHolder.java:933"
+  ]
+ },
+ {
+  "id": "9012.21",
+  "number": "21",
+  "parent": "9012",
+  "alias": "CT",
+  "name": "Cash tolerance",
+  "category": "compound",
+  "description": "Allowed deviation (range) around the cash-balance ratio. For CASH 9007 delta maps here.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "0.05",
+   "explanation": "Tolerate 5% imbalance."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.21-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.21",
+     "9012.71",
+     "9012.72"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(21)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(21)!=null"
+     },
+     {
+      "field": "doCash",
+      "op": ">",
+      "value": "0",
+      "raw": "doCash>0"
+     },
+     {
+      "field": "js",
+      "op": "js",
+      "value": "tag71>0 || tag72>0",
+      "raw": "<js>tag71>0 || tag72>0</js>"
+     }
+    ],
+    "title": "Tolerance and dollar leads cannot coexist",
+    "explanation": "checkForError: 'cash-balance ratio tolerance and dollar bounds cannot coexist'.",
+    "sources": [
+     "Parameters.java:12836"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1760",
+   "Parameters.java:13980",
+   "Parameters.java:10917"
+  ]
+ },
+ {
+  "id": "9012.22",
+  "number": "22",
+  "parent": "9012",
+  "alias": "CM",
+  "name": "Cash balance with residual",
+  "category": "compound",
+  "description": "Turns cash balancing on and, if the value is 1 or starts with R, enables residual cash balancing (do_cashresidual), which enables rimb_aggr.",
+  "valueFormat": "1|R...|0",
+  "type": "string",
+  "allowedValues": [],
+  "default": "off",
+  "example": {
+   "value": "R",
+   "explanation": "Cash balance including residual handling."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.22-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.22",
+     "9012.13"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(22)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(22)!=null"
+     }
+    ],
+    "title": "Forces cash balance on",
+    "explanation": "Always sets _do_cash=1.",
+    "sources": [
+     "Parameters.java:1727"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1727",
+   "Parameters.java:13968",
+   "Parameters.java:16786",
+   "OrderHolder.java:1923"
+  ]
+ },
+ {
+  "id": "9012.23",
+  "number": "23",
+  "parent": "9012",
+  "alias": "MC",
+  "name": "Must complete",
+  "category": "risk-control",
+  "description": "Force (1) or disable (0) must-complete. Other values of the form '<T|A|C>,<value>' make it conditional: must-complete only if the stock is 'large' (T: ADV traded value >= value*1e6; A: order <= value% of ADV; C: market cap USD >= value*1000). If unset, mustComplete() uses the algorithm default only when no max rate, no cash balance and no CIS switch.",
+  "valueFormat": "0|1|<T|A|C>,<value>",
+  "type": "string",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "not must complete"
+   },
+   {
+    "value": "1",
+    "meaning": "must complete"
+   }
+  ],
+  "default": "algorithm default (-1); when this tag is absent: Config defaults 23=1 for VWAP/TMX (ai.fixmsg.properties:45, ai.fixmsg.properties:607, ai.fixmsg.properties:280)",
+  "example": {
+   "value": "A,5",
+   "explanation": "Must complete only if order is <= 5% of ADV."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.23-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.23",
+     "9012.6"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(23)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(23)=1"
+     },
+     {
+      "field": "maxPartLevel",
+      "op": ">",
+      "value": "0.0001",
+      "raw": "maxPartLevel>0.0001"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "C1^C2^CH",
+      "raw": "compositeExchangeCode=C1^C2^CH"
+     }
+    ],
+    "title": "China: must complete with volume cap KO'd",
+    "explanation": "Config KO.",
+    "sources": [
+     "ai.fixmsg.properties:450"
+    ]
+   },
+   {
+    "id": "REL-9012.23-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.23",
+     "9012.173"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(23)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(23)=1"
+     },
+     {
+      "field": "passive_only",
+      "op": ">",
+      "value": "0",
+      "raw": "passive_only>0"
+     },
+     {
+      "field": "passive_only",
+      "op": "!=",
+      "value": "4^9",
+      "raw": "passive_only!=4^9"
+     }
+    ],
+    "title": "Passive setting conflicts with must complete",
+    "explanation": "Config KO when 173 passive-only (not 4/9) is combined with 23=1.",
+    "sources": [
+     "ai.fixmsg.properties:302"
+    ]
+   },
+   {
+    "id": "REL-9012.23-03",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.23",
+     "9012.15"
+    ],
+    "algorithms": [
+     "IIS"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(23)",
+      "op": "=",
+      "value": "0",
+      "raw": "tag9012(23)=0"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "IIS",
+      "raw": "algorithm=IIS"
+     }
+    ],
+    "title": "IIS close inference uses 23",
+    "explanation": "IIS with 15 not 0 auto-closes when mustCompleteTag()==0 or start before preCloseEnd.",
+    "sources": [
+     "FlexOrderStream.java:14108"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1824",
+   "Parameters.java:1210",
+   "Parameters.java:14089",
+   "Parameters.java:14093",
+   "CandidateRegulator.java:1171",
+   "Parameters.java:12430",
+   "ai.fixmsg.properties:45",
+   "ai.fixmsg.properties:607",
+   "ai.fixmsg.properties:280"
+  ]
+ },
+ {
+  "id": "9012.24",
+  "number": "24",
+  "parent": "9012",
+  "alias": "ME",
+  "name": "Minimum execution (min fill) size",
+  "category": "dark",
+  "description": "Minimum fill quantity for venues that support it. Plain number = shares. Prefixed forms: RLS<n> = n round lots, ATS<n> = n x average trade size, AQS<n> = n x average quote size, PCT<n> = n% of the work order, <CCY><n> (e.g. USD20000) = minimum notional in that currency (converted to stock currency).",
+  "valueFormat": "<shares> | RLS<n> | ATS<n> | AQS<n> | PCT<n> | <CCY><value>",
+  "type": "string",
+  "allowedValues": [],
+  "default": "0 (none); when this tag is absent: Config defaults/KO for CITADV (ai.fixmsg.properties:183, ai.fixmsg.properties:184)",
+  "example": {
+   "value": "USD20000",
+   "explanation": "Only accept fills of at least USD 20,000 notional."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.24-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.24"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(24)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(24)!=null"
+     },
+     {
+      "field": "tag9012(24)",
+      "op": "~",
+      "value": "^(RLS|ATS|AQS)",
+      "raw": "tag9012(24)~^(RLS|ATS|AQS)"
+     },
+     {
+      "field": "stockData",
+      "op": "=",
+      "value": "missing",
+      "raw": "stockData=missing"
+     }
+    ],
+    "title": "Missing lot/trade/quote data rejects",
+    "explanation": "_err_msg 'null stock or 0 round lot size/avg trade size/avg quote size'.",
+    "sources": [
+     "Parameters.java:1777"
+    ]
+   },
+   {
+    "id": "REL-9012.24-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.24"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(24)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(24)!=null"
+     },
+     {
+      "field": "tag9012(24)",
+      "op": "~",
+      "value": "^[A-Za-z]{3}",
+      "raw": "tag9012(24)~^[A-Za-z]{3}"
+     },
+     {
+      "field": "currencyValid",
+      "op": "=",
+      "value": "false",
+      "raw": "currencyValid=false"
+     }
+    ],
+    "title": "Invalid currency rejected",
+    "explanation": "'currency invalid in tag 24'.",
+    "sources": [
+     "Parameters.java:1797"
+    ]
+   },
+   {
+    "id": "REL-9012.24-03",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.24"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(24)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(24)!=null"
+     },
+     {
+      "field": "js",
+      "op": "js",
+      "value": "minexecsize > minfill_reject_threshold*size",
+      "raw": "<js>minexecsize > minfill_reject_threshold*size</js>"
+     }
+    ],
+    "title": "Min fill too large vs order rejected",
+    "explanation": "'MinFill Qty Greater Than x of Order Size' when above minfill_reject_threshold.",
+    "sources": [
+     "Parameters.java:12894"
+    ]
+   },
+   {
+    "id": "REL-9012.24-04",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.24",
+     "9012.53"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(24)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(24)!=null"
+     }
+    ],
+    "title": "Venue selection depends on tag 53",
+    "explanation": "With 53>0 venues that do not allow the min size are skipped; 53=2 restricts to venues with minExec==2.",
+    "sources": [
+     "ExchangeMaster.java:1587",
+     "ExchangeMaster.java:2149"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1769",
+   "Parameters.java:14023",
+   "WorkOrder.java:509",
+   "Parameters.java:12563",
+   "ai.fixmsg.properties:183",
+   "ai.fixmsg.properties:184"
+  ]
+ },
+ {
+  "id": "9012.25",
+  "number": "25",
+  "parent": "9012",
+  "alias": null,
+  "name": "DMA posting mode",
+  "category": "posting",
+  "description": "Which venues a DMA/DLP strategy posts on: 0 = none (take only), 1 = broker primary exchange only, 2 = SMARTPOST venues (fallback to POST), 3 = POST venues (default).",
+  "valueFormat": "0|1|2|3",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "no posting"
+   },
+   {
+    "value": "1",
+    "meaning": "broker primary only"
+   },
+   {
+    "value": "2",
+    "meaning": "smart post, fallback post"
+   },
+   {
+    "value": "3",
+    "meaning": "post venues"
+   }
+  ],
+  "default": "3",
+  "example": {
+   "value": "2",
+   "explanation": "Post via smart-post venues."
+  },
+  "appliesTo": [
+   "DMA",
+   "SDMA",
+   "ICEDMA",
+   "DLP"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.25-01",
+    "kind": "rewrite",
+    "severity": "high",
+    "tags": [
+     "9012.25"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(25)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(25)=1"
+     }
+    ],
+    "title": "Config rewrites 25=1 to 3",
+    "explanation": "Rule '9012=25=3 :: tag9012(25)=1' turns broker-primary posting into normal posting; another rule defaults 25=3 for DMA family.",
+    "sources": [
+     "ai.fixmsg.properties:310",
+     "ai.fixmsg.properties:470"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2252",
+   "Parameters.java:14935",
+   "oeo/DMAStrategy.java:93",
+   "oeo/DMAStrategy.java:105"
+  ]
+ },
+ {
+  "id": "9012.26",
+  "number": "26",
+  "parent": "9012",
+  "alias": null,
+  "name": "MOC rate (close reserve)",
+  "category": "auction-close",
+  "description": "Amount to reserve for the closing auction, interpreted per tag 27 (moc_rate_type): percent of estimated close volume, of order, of ADV, etc. Optional 2nd/3rd fields are %ADV and %order-size caps, only used when 27 is 30-37.",
+  "valueFormat": "rate[,advPct[,sizePct]]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "20",
+   "explanation": "With 27=1: reserve 20% of the order for the close."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.26-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.26",
+     "9012.27"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(26)",
+      "op": ">",
+      "value": "100",
+      "raw": "tag9012(26)>100"
+     },
+     {
+      "field": "tag9012(27)",
+      "op": "!=",
+      "value": "8^18^38",
+      "raw": "tag9012(27)!=8^18^38"
+     }
+    ],
+    "title": "Rate >100 rejected",
+    "explanation": "checkForError 'in valid moc_rate' unless moc_rate_type is 8/18/38.",
+    "sources": [
+     "Parameters.java:12842"
+    ]
+   },
+   {
+    "id": "REL-9012.26-02",
+    "kind": "requires",
+    "severity": "medium",
+    "tags": [
+     "9012.26",
+     "9012.27"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(26)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(26)!=null"
+     },
+     {
+      "field": "tag9012(27)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(27)=null"
+     }
+    ],
+    "title": "Needs 27 to take effect",
+    "explanation": "Smart close relay and close ownership require moc_rate_type>-1 and moc_rate>0; without 27 the type is -1.",
+    "sources": [
+     "Parameters.java:11076",
+     "CLOSE-AUCTION-RUNBOOK.md:254"
+    ]
+   },
+   {
+    "id": "REL-9012.26-03",
+    "kind": "conversion",
+    "severity": "high",
+    "tags": [
+     "9012.26",
+     "9012.27"
+    ],
+    "algorithms": [
+     "IIS"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(26)",
+      "op": "=",
+      "value": "100",
+      "raw": "tag9012(26)=100"
+     },
+     {
+      "field": "tag9012(27)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(27)=1"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "IIS",
+      "raw": "algorithm=IIS"
+     }
+    ],
+    "title": "IIS 100% close converts to MOC",
+    "explanation": "IIS with moc_rate_type 1 and rate 100 (and allow_would<=0, lot-compatible) is converted with setIISToMOC; Indian close algos are reset to VWAP.",
+    "sources": [
+     "FlexOrderStream.java:13970",
+     "Parameters.java:11091"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2256",
+   "Parameters.java:14955",
+   "OrderHolder.java:479",
+   "CLOSE-AUCTION-RUNBOOK.md:379"
+  ]
+ },
+ {
+  "id": "9012.27",
+  "number": "27",
+  "parent": "9012",
+  "alias": null,
+  "name": "MOC rate type",
+  "category": "auction-close",
+  "description": "How tag 26 is interpreted and who owns the close: 0 = % of estimated close, 1 = % of order, 2 = % of ADV, 3 = % of average close, 4 = no MOC, 5 = same as 0, 6 = % of max(historical estimate, indicated size); 10-13 = same as 0-3 but MOC issued after close; 30-37 use tag 26 fields 2/3 as %ADV/%size caps. Second field = moc_reserve_allow_would (allow would on reserved shares). Any value >=0 makes the OPE own the close (doCloseOpe).",
+  "valueFormat": "type[,allowWould]",
+  "type": "composite",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "% est. close"
+   },
+   {
+    "value": "1",
+    "meaning": "% of order"
+   },
+   {
+    "value": "2",
+    "meaning": "% ADV"
+   },
+   {
+    "value": "3",
+    "meaning": "% avg close"
+   },
+   {
+    "value": "4",
+    "meaning": "no MOC"
+   },
+   {
+    "value": "6",
+    "meaning": "% max(hist est, indicated)"
+   },
+   {
+    "value": "10-13",
+    "meaning": "as 0-3, MOC after close"
+   },
+   {
+    "value": "30-37",
+    "meaning": "with %ADV/%size caps"
+   }
+  ],
+  "default": "-1 (none)",
+  "example": {
+   "value": "1",
+   "explanation": "Tag 26 is a percent of the order."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.27-01",
+    "kind": "side_effect",
+    "severity": "high",
+    "tags": [
+     "9012.27",
+     "9012.15"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(27)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(27)!=null"
+     }
+    ],
+    "title": "Moves close ownership to OPE",
+    "explanation": "doCloseOpe() returns 1 when moc_rate_type>=0, so doCloseScheduler() becomes 0.",
+    "sources": [
+     "Parameters.java:13676",
+     "Parameters.java:13690"
+    ]
+   },
+   {
+    "id": "REL-9012.27-02",
+    "kind": "conversion",
+    "severity": "medium",
+    "tags": [
+     "9012.27"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(27)",
+      "op": ">=",
+      "value": "10",
+      "raw": "tag9012(27)>=10"
+     },
+     {
+      "field": "tag9012(27)",
+      "op": "<",
+      "value": "20",
+      "raw": "tag9012(27)<20"
+     },
+     {
+      "field": "now",
+      "op": ">=",
+      "value": "continuousEnd",
+      "raw": "now>=continuousEnd"
+     }
+    ],
+    "title": "Types 10-19 convert late orders to MOC",
+    "explanation": "After continuous end, moc_rate_type 10-19 triggers setEUMOCAfterClose.",
+    "sources": [
+     "FlexOrderStream.java:13963"
+    ]
+   },
+   {
+    "id": "REL-9012.27-03",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.27"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(27)",
+      "op": ">=",
+      "value": "20",
+      "raw": "tag9012(27)>=20"
+     }
+    ],
+    "title": "Types >=20 keep close in EU when end is early",
+    "explanation": "EU: early end time clears close only if moc_rate_type<20.",
+    "sources": [
+     "FlexOrderStream.java:14116"
+    ]
+   },
+   {
+    "id": "REL-9012.27-04",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.27",
+     "9012.26"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(27)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(27)!=null"
+     },
+     {
+      "field": "tag9012(26)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(26)>0"
+     }
+    ],
+    "title": "Enables SMART_CLOSE relay",
+    "explanation": "With smart_close_compound enabled, moc_rate_type>-1 and moc_rate>0 sets the SMART_CLOSE relay algorithm.",
+    "sources": [
+     "Parameters.java:11067"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2267",
+   "Parameters.java:14969",
+   "Parameters.java:14986",
+   "Parameters.java:14463",
+   "CLOSE-AUCTION-RUNBOOK.md:380"
+  ]
+ },
+ {
+  "id": "9012.28",
+  "number": "28",
+  "parent": "9012",
+  "alias": null,
+  "name": "MOC all-in auction mode",
+  "category": "auction-close",
+  "description": "When the whole order goes to the close (all in auction): 0 = send MOC with the normal delays, 1 = send the MOC as soon as possible (at the computed preclose start).",
+  "valueFormat": "0|1",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "send with delays"
+   },
+   {
+    "value": "1",
+    "meaning": "send ASAP"
+   }
+  ],
+  "default": "-1 (normal)",
+  "example": {
+   "value": "1",
+   "explanation": "Send the all-in MOC immediately."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2277",
+   "Parameters.java:14997",
+   "ExecutionCustomizer.java:381"
+  ]
+ },
+ {
+  "id": "9012.31",
+  "number": "31",
+  "parent": "9012",
+  "alias": null,
+  "name": "Would range (non-WOW)",
+  "category": "would",
+  "description": "Would-price offset for non-WOW algos when no explicit would price (tag 10): builds B<value> (bps) or C<value> (cents if tag 18 starts with C). Ignored for WOW algos (tag 17 there).",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "-10",
+   "explanation": "Would at 10 bps better than reference."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.31-01",
+    "kind": "ineffective",
+    "severity": "low",
+    "tags": [
+     "9012.31",
+     "9012.10"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(31)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(31)!=null"
+     },
+     {
+      "field": "tag9012(10)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(10)!=null"
+     }
+    ],
+    "title": "Ignored when 10 is set",
+    "explanation": "Range is only used when _iwouldpricestr is null.",
+    "sources": [
+     "Parameters.java:12017"
+    ]
+   },
+   {
+    "id": "REL-9012.31-02",
+    "kind": "ineffective",
+    "severity": "low",
+    "tags": [
+     "9012.31"
+    ],
+    "algorithms": [
+     "WOW"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(31)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(31)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "WOW",
+      "raw": "algorithm=WOW"
+     }
+    ],
+    "title": "Ignored for WOW",
+    "explanation": "__p_31 only applies when !isWOW().",
+    "sources": [
+     "Parameters.java:1620"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1620",
+   "Parameters.java:12018"
+  ]
+ },
+ {
+  "id": "9012.32",
+  "number": "32",
+  "parent": "9012",
+  "alias": null,
+  "name": "Would-stop price",
+  "category": "would",
+  "description": "Absolute 'would stop' price (a would trigger on the adverse side). Used when tag 33 (range) is 0/unset. Ignored for WOW.",
+  "valueFormat": "price",
+  "type": "price",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "10.5",
+   "explanation": "Would-stop at 10.50."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.32-01",
+    "kind": "ineffective",
+    "severity": "low",
+    "tags": [
+     "9012.32",
+     "9012.33"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(32)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(32)!=null"
+     },
+     {
+      "field": "tag9012(33)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(33)!=null"
+     }
+    ],
+    "title": "Range 33 wins",
+    "explanation": "If |33|>0 the range is used instead.",
+    "sources": [
+     "Parameters.java:12061"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1680",
+   "Parameters.java:12060",
+   "Parameters.java:12068"
+  ]
+ },
+ {
+  "id": "9012.33",
+  "number": "33",
+  "parent": "9012",
+  "alias": null,
+  "name": "Would-stop range",
+  "category": "would",
+  "description": "Would-stop offset, in bps (default) or cents if tag 35 starts with C; takes precedence over tag 32. Invalid spec rejects ('incorrect iwould stop price tag'). Ignored for WOW.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "50",
+   "explanation": "Would-stop 50 bps away."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1686",
+   "Parameters.java:12060",
+   "Parameters.java:12069"
+  ]
+ },
+ {
+  "id": "9012.34",
+  "number": "34",
+  "parent": "9012",
+  "alias": null,
+  "name": "Would-stop dark",
+  "category": "would",
+  "description": "Whether would-stop executions go to dark venues (1 or a value containing 'dark'). Ignored for WOW.",
+  "valueFormat": "0|1|dark",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "false",
+  "example": {
+   "value": "1",
+   "explanation": "Would-stop in dark."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1698",
+   "Parameters.java:13526",
+   "OrderHolder.java:1937"
+  ]
+ },
+ {
+  "id": "9012.35",
+  "number": "35",
+  "parent": "9012",
+  "alias": null,
+  "name": "Would-stop range unit",
+  "category": "would",
+  "description": "Unit of tag 33: starts with C = cents, otherwise bps. Ignored for WOW.",
+  "valueFormat": "B|C",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "B",
+    "meaning": "bps"
+   },
+   {
+    "value": "C",
+    "meaning": "cents"
+   }
+  ],
+  "default": "B",
+  "example": {
+   "value": "C",
+   "explanation": "Tag 33 in cents."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1692",
+   "Parameters.java:12063"
+  ]
+ },
+ {
+  "id": "9012.36",
+  "number": "36",
+  "parent": "9012",
+  "alias": null,
+  "name": "BernX (internal cross) only",
+  "category": "routing-venue",
+  "description": "Any value >0 sets internal cross mode 2 = cross only internally (BernX only).",
+  "valueFormat": "0|1",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "internal cross 1 (allowed)",
+  "example": {
+   "value": "1",
+   "explanation": "Only internal crossing."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.36-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.36",
+     "9012.13"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(36)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(36)>0"
+     },
+     {
+      "field": "doCash",
+      "op": ">",
+      "value": "0",
+      "raw": "doCash>0"
+     }
+    ],
+    "title": "Cannot combine with cash balance",
+    "explanation": "'cash-balance cannot combine with BernX only'.",
+    "sources": [
+     "Parameters.java:12832"
+    ]
+   },
+   {
+    "id": "REL-9012.36-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.36",
+     "9012.10",
+     "9012.5"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(36)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(36)>0"
+     }
+    ],
+    "title": "Cannot combine with would or min rate",
+    "explanation": "'BernX-only cannot combine with iwould or min part'.",
+    "sources": [
+     "Parameters.java:12839"
+    ]
+   },
+   {
+    "id": "REL-9012.36-03",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.36",
+     "9012.14"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(36)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(36)>0"
+     },
+     {
+      "field": "doOpen",
+      "op": ">",
+      "value": "0",
+      "raw": "doOpen>0"
+     }
+    ],
+    "title": "Cannot combine with do open",
+    "explanation": "checkForErrorFinal.",
+    "sources": [
+     "Parameters.java:12932"
+    ]
+   },
+   {
+    "id": "REL-9012.36-04",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.36"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(36)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(36)>0"
+     }
+    ],
+    "title": "No relay/split",
+    "explanation": "computeRelayAlgorithm/adjustRelayAlgorithm return early with internal cross 2; only CROSS candidates are processed.",
+    "sources": [
+     "Parameters.java:11144",
+     "CandidateProcessor.java:2378"
+    ]
+   },
+   {
+    "id": "REL-9012.36-05",
+    "kind": "override",
+    "severity": "low",
+    "tags": [
+     "9012.36",
+     "9012.51"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(36)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(36)!=null"
+     },
+     {
+      "field": "tag9012(51)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(51)!=null"
+     }
+    ],
+    "title": "Shares field with 51",
+    "explanation": "Both write _internal_cross; the later-parsed one wins (36 only ever writes 2).",
+    "sources": [
+     "Parameters.java:1843",
+     "Parameters.java:1855"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1855",
+   "Parameters.java:13917",
+   "CandidateProcessor.java:2138"
+  ]
+ },
+ {
+  "id": "9012.37",
+  "number": "37",
+  "parent": "9012",
+  "alias": "DO",
+  "name": "Dark only",
+  "category": "dark",
+  "description": "1 = execute only on dark venues (blind exchanges skipped otherwise allowed; lit venues excluded except would-type candidates).",
+  "valueFormat": "0|1",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "false",
+  "example": {
+   "value": "1",
+   "explanation": "Dark venues only."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.37-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.37",
+     "9012.5"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(37)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(37)=1"
+     },
+     {
+      "field": "tag9012(5)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(5)>0"
+     },
+     {
+      "field": "tag9012(5)",
+      "op": "<=",
+      "value": "1",
+      "raw": "tag9012(5)<=1"
+     }
+    ],
+    "title": "Min rate <=1% with dark only rejected",
+    "explanation": "checkForError.",
+    "sources": [
+     "Parameters.java:12809"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1820",
+   "Parameters.java:14098",
+   "ExchangeMaster.java:676",
+   "ExchangeMaster.java:1064",
+   "Candidate.java:130"
+  ]
+ },
+ {
+  "id": "9012.38",
+  "number": "38",
+  "parent": "9012",
+  "alias": null,
+  "name": "DMA all-in auction mode",
+  "category": "auction-open",
+  "description": "For DMA algos, send the whole order into the auction: 1 = open, 2 = close, 3 = both, 4 = both but only for limit orders.",
+  "valueFormat": "1|2|3|4",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "1",
+    "meaning": "open"
+   },
+   {
+    "value": "2",
+    "meaning": "close"
+   },
+   {
+    "value": "3",
+    "meaning": "open and close"
+   },
+   {
+    "value": "4",
+    "meaning": "both, limit orders only"
+   }
+  ],
+  "default": "-1 (off); config: 1 JP, 3 elsewhere for DMA family; when this tag is absent: Config default 1 (JP) / 3 (others) (ai.fixmsg.properties:468, ai.fixmsg.properties:469)",
+  "example": {
+   "value": "3",
+   "explanation": "All-in to open and close auctions."
+  },
+  "appliesTo": [
+   "DMA",
+   "SDMA",
+   "ICEDMA"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.38-01",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.38",
+     "9012.14"
+    ],
+    "algorithms": [
+     "DMA",
+     "SDMA",
+     "ICEDMA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(38)",
+      "op": "=",
+      "value": "1^3^4",
+      "raw": "tag9012(38)=1^3^4"
+     },
+     {
+      "field": "doOpen",
+      "op": ">",
+      "value": "0",
+      "raw": "doOpen>0"
+     },
+     {
+      "field": "now",
+      "op": ">",
+      "value": "preOpenPeriodEnd",
+      "raw": "now>preOpenPeriodEnd"
+     }
+    ],
+    "title": "All-in open after pre-open rejected",
+    "explanation": "AUCTION_REJECTED when dma_all_in_open, doOpen>0 and arriving after preOpenPeriodEnd.",
+    "sources": [
+     "FlexOrderStream.java:14493"
+    ]
+   },
+   {
+    "id": "REL-9012.38-02",
+    "kind": "conversion",
+    "severity": "medium",
+    "tags": [
+     "9012.38"
+    ],
+    "algorithms": [
+     "DMA",
+     "SDMA",
+     "ICEDMA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(38)",
+      "op": "=",
+      "value": "2^3^4",
+      "raw": "tag9012(38)=2^3^4"
+     },
+     {
+      "field": "now",
+      "op": ">=",
+      "value": "continuousEnd",
+      "raw": "now>=continuousEnd"
+     }
+    ],
+    "title": "All-in close after continuous end -> MOC",
+    "explanation": "setEUMOCAfterClose for DMA with dma_all_in_close.",
+    "sources": [
+     "FlexOrderStream.java:13962"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2281",
+   "Parameters.java:12624",
+   "CandidateProcessor.java:230",
+   "oeo/DMAStrategy.java:657",
+   "ai.fixmsg.properties:468",
+   "ai.fixmsg.properties:469"
+  ]
+ },
+ {
+  "id": "9012.39",
+  "number": "39",
+  "parent": "9012",
+  "alias": "IB1",
+  "name": "Wait-to-begin price",
+  "category": "limit-price",
+  "description": "Price condition that must be met before the order starts working (IWouldPrice syntax: absolute price or relative bps/cps). When set and valid the WAIT_TO_BEGIN relay algorithm is used.",
+  "valueFormat": "<price> | B<bps> | C<cps>",
+  "type": "price",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "B-20",
+   "explanation": "Start only after price is 20 bps better."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.39-01",
+    "kind": "conversion",
+    "severity": "high",
+    "tags": [
+     "9012.39"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(39)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(39)!=null"
+     }
+    ],
+    "title": "Uses WAIT_TO_BEGIN relay",
+    "explanation": "A non-none ibegin price sets RelayAlgorithm.WAIT_TO_BEGIN (unless compound/scale/index/OOM relays take precedence).",
+    "sources": [
+     "Parameters.java:12310"
+    ]
+   },
+   {
+    "id": "REL-9012.39-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.39"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(39)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(39)!=null"
+     },
+     {
+      "field": "ibeginPriceValid",
+      "op": "=",
+      "value": "false",
+      "raw": "ibeginPriceValid=false"
+     }
+    ],
+    "title": "Invalid price rejected",
+    "explanation": "'incorrect ibegin price tag'.",
+    "sources": [
+     "Parameters.java:12085"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1704",
+   "Parameters.java:12075"
+  ]
+ },
+ {
+  "id": "9012.40",
+  "number": "40",
+  "parent": "9012",
+  "alias": "IB2",
+  "name": "Wait-to-begin range",
+  "category": "limit-price",
+  "description": "Offset for the wait-to-begin price when tag 39 is not set: B<range> (bps) or C<range> if tag 41 starts with C. Stop-loss style relative specs are sign-flipped only when not given via range.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "-20",
+   "explanation": "Begin 20 bps better."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1708",
+   "Parameters.java:12076",
+   "Parameters.java:12090"
+  ]
+ },
+ {
+  "id": "9012.41",
+  "number": "41",
+  "parent": "9012",
+  "alias": "IB3",
+  "name": "Wait-to-begin range unit",
+  "category": "limit-price",
+  "description": "Unit for tag 40: C = cents, else bps.",
+  "valueFormat": "B|C",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "B",
+    "meaning": "bps"
+   },
+   {
+    "value": "C",
+    "meaning": "cents"
+   }
+  ],
+  "default": "B",
+  "example": {
+   "value": "C",
+   "explanation": "Tag 40 in cents."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1713",
+   "Parameters.java:12078"
+  ]
+ },
+ {
+  "id": "9012.42",
+  "number": "42",
+  "parent": "9012",
+  "alias": "IB4",
+  "name": "Wait-to-begin direction",
+  "category": "limit-price",
+  "description": "1 or a value starting with S sets the wait-to-begin price class direction to 1 (otherwise default direction).",
+  "valueFormat": "1|S...",
+  "type": "enum",
+  "allowedValues": [],
+  "default": "-1 (default)",
+  "example": {
+   "value": "S",
+   "explanation": "Direction 1."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.42-01",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.42",
+     "9012.92",
+     "9012.54"
+    ],
+    "algorithms": [
+     "SDMA",
+     "ICEDMA",
+     "DMA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(42)",
+      "op": "!=",
+      "value": "1^S",
+      "raw": "tag9012(42)!=1^S"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "SDMA^ICEDMA^DMA",
+      "raw": "algorithm=SDMA^ICEDMA^DMA"
+     },
+     {
+      "field": "limitPriceStrUsed",
+      "op": "=",
+      "value": "0",
+      "raw": "limitPriceStrUsed=0"
+     }
+    ],
+    "title": "DMA default limit/strike rules skipped when 42=1/S",
+    "explanation": "Config rules that write 92=S,.. ^54=C/L for DMA orders without a parent relay require tag 42 not 1/S.",
+    "sources": [
+     "ai.fixmsg.properties:66",
+     "ai.fixmsg.properties:68"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1717",
+   "Parameters.java:12084"
+  ]
+ },
+ {
+  "id": "9012.43",
+  "number": "43",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair price mode",
+  "category": "compound",
+  "description": "Prices used to evaluate a pair: 0 = buy at ask/sell at bid, 1 = mid/mid, 2 = last/last, 3 = buy at bid/sell at ask. Must match across both legs.",
+  "valueFormat": "0|1|2|3",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "ask/bid"
+   },
+   {
+    "value": "1",
+    "meaning": "mid"
+   },
+   {
+    "value": "2",
+    "meaning": "last"
+   },
+   {
+    "value": "3",
+    "meaning": "bid/ask"
+   }
+  ],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Use mid prices."
+  },
+  "appliesTo": [
+   "PAIR"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.43-01",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.43"
+    ],
+    "algorithms": [
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(43)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(43)!=null"
+     }
+    ],
+    "title": "Must match on both legs",
+    "explanation": "checkPairParams: 'pair tag 43 conflict'.",
+    "sources": [
+     "Parameters.java:14802"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2091",
+   "Parameters.java:2085"
+  ]
+ },
+ {
+  "id": "9012.44",
+  "number": "44",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair spread mode",
+  "category": "compound",
+  "description": "Defines the pair spread and makes the order a pair order (isPair() is true whenever >=0): 0 = price_buy/price_sell ratio (62), 1 = price_buy-price_sell (62), 2 = bps vs reference (62 bps, 63 ref), 3 = buy*ratio+cash-sell, 4 = (buy*ratio+cash)/sell, 5 = mode 4 in bps.",
+  "valueFormat": "0-5",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "ratio"
+   },
+   {
+    "value": "1",
+    "meaning": "difference"
+   },
+   {
+    "value": "2",
+    "meaning": "bps vs reference"
+   },
+   {
+    "value": "3",
+    "meaning": "buy*r+cash-sell"
+   },
+   {
+    "value": "4",
+    "meaning": "(buy*r+cash)/sell"
+   },
+   {
+    "value": "5",
+    "meaning": "mode 4 in bps"
+   }
+  ],
+  "default": "-1 (not a pair); when this tag is absent: PAIR without spread mode rejected (Parameters.java:12850)",
+  "example": {
+   "value": "1",
+   "explanation": "Trade when buy-sell spread reaches tag 62."
+  },
+  "appliesTo": [
+   "PAIR"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.44-01",
+    "kind": "requires",
+    "severity": "high",
+    "tags": [
+     "9012.44",
+     "9012.63"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(44)",
+      "op": "=",
+      "value": "2",
+      "raw": "tag9012(44)=2"
+     },
+     {
+      "field": "tag9012(63)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(63)=null"
+     }
+    ],
+    "title": "Mode 2 needs tag 63",
+    "explanation": "'pair spread bps mode need reference type'.",
+    "sources": [
+     "Parameters.java:12854"
+    ]
+   },
+   {
+    "id": "REL-9012.44-02",
+    "kind": "side_effect",
+    "severity": "high",
+    "tags": [
+     "9012.44",
+     "9012.13",
+     "9012.47",
+     "9012.64"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(44)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(44)!=null"
+     }
+    ],
+    "title": "Turns on cash balance",
+    "explanation": "isPair() forces _do_cash=1; cash ratio = 0 for 47=0 or tag 64 for 47=1.",
+    "sources": [
+     "Parameters.java:11986"
+    ]
+   },
+   {
+    "id": "REL-9012.44-03",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.44"
+    ],
+    "algorithms": [
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(44)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(44)!=null"
+     }
+    ],
+    "title": "Must match on both legs",
+    "explanation": "'pair tag 44 conflict'.",
+    "sources": [
+     "Parameters.java:14803"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2105",
+   "Parameters.java:2095",
+   "Parameters.java:14628",
+   "Parameters.java:14640",
+   "Parameters.java:14644",
+   "Parameters.java:12850"
+  ]
+ },
+ {
+  "id": "9012.45",
+  "number": "45",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair execution mode",
+  "category": "compound",
+  "description": "0 = instantaneous spread check, 1 = consider accumulated saving/buffer/room. Must match on both legs.",
+  "valueFormat": "0|1",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "instantaneous"
+   },
+   {
+    "value": "1",
+    "meaning": "accumulated"
+   }
+  ],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Use accumulated savings."
+  },
+  "appliesTo": [
+   "PAIR"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.45-01",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.45"
+    ],
+    "algorithms": [
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(45)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(45)!=null"
+     }
+    ],
+    "title": "Must match on both legs",
+    "explanation": "'pair tag 45 conflict'.",
+    "sources": [
+     "Parameters.java:14805"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2114",
+   "Parameters.java:2110"
+  ]
+ },
+ {
+  "id": "9012.46",
+  "number": "46",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair direction mode",
+  "category": "compound",
+  "description": "0 = act when better than the spread, 1 = act when worse. Affects spread sign/ratio inversion, deal-input swapping, and compound portfolio tracker. Must match on both legs.",
+  "valueFormat": "0|1",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "better than spread"
+   },
+   {
+    "value": "1",
+    "meaning": "worse than spread"
+   }
+  ],
+  "default": "0",
+  "example": {
+   "value": "0",
+   "explanation": "Trade when spread is better."
+  },
+  "appliesTo": [
+   "PAIR",
+   "COMPOUND"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.46-01",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.46"
+    ],
+    "algorithms": [
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(46)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(46)!=null"
+     }
+    ],
+    "title": "Must match on both legs",
+    "explanation": "'pair tag 46 conflict'.",
+    "sources": [
+     "Parameters.java:14806"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2126",
+   "Parameters.java:2122",
+   "Parameters.java:14664",
+   "Parameters.java:11997",
+   "Parameters.java:12225"
+  ]
+ },
+ {
+  "id": "9012.47",
+  "number": "47",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair balance mode",
+  "category": "compound",
+  "description": "0 = keep the initial buy/sell dollar ratio (cash ratio 0), 1 = use the ratio given in tag 64.",
+  "valueFormat": "0|1",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "initial ratio"
+   },
+   {
+    "value": "1",
+    "meaning": "ratio from tag 64"
+   }
+  ],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Use tag 64 ratio."
+  },
+  "appliesTo": [
+   "PAIR"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.47-01",
+    "kind": "requires",
+    "severity": "medium",
+    "tags": [
+     "9012.47",
+     "9012.64"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(47)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(47)=1"
+     },
+     {
+      "field": "tag9012(64)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(64)=null"
+     }
+    ],
+    "title": "Mode 1 needs tag 64",
+    "explanation": "Cash ratio is taken from _pair_balance_ratio (tag 64).",
+    "sources": [
+     "Parameters.java:11989"
+    ]
+   },
+   {
+    "id": "REL-9012.47-02",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.47"
+    ],
+    "algorithms": [
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(47)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(47)!=null"
+     }
+    ],
+    "title": "Must match on both legs",
+    "explanation": "'pair tag 47 conflict'.",
+    "sources": [
+     "Parameters.java:14807"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2134",
+   "Parameters.java:2130"
+  ]
+ },
+ {
+  "id": "9012.48",
+  "number": "48",
+  "parent": "9012",
+  "alias": null,
+  "name": "Portfolio group wait time",
+  "category": "other",
+  "description": "Seconds to wait to group portfolio orders before starting (converted to ms; 0 means default 5 s). Also scales the non-portfolio delay.",
+  "valueFormat": "seconds",
+  "type": "float",
+  "allowedValues": [],
+  "default": "5 s",
+  "example": {
+   "value": "10",
+   "explanation": "Wait 10 s for the rest of the basket."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2352",
+   "Parameters.java:278",
+   "FlexOrderStream.java:15440",
+   "FlexOrderStream.java:15459"
+  ]
+ },
+ {
+  "id": "9012.51",
+  "number": "51",
+  "parent": "9012",
+  "alias": "BX",
+  "name": "Internal cross (BernX) mode",
+  "category": "routing-venue",
+  "description": "Sets internal crossing mode directly: 0 = no internal cross, 1 = allowed (default), 2 = internal cross only (same as tag 36). internalCross() returns 0 for algos that skip price checks.",
+  "valueFormat": "0|1|2",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "off"
+   },
+   {
+    "value": "1",
+    "meaning": "allowed"
+   },
+   {
+    "value": "2",
+    "meaning": "only"
+   }
+  ],
+  "default": "1",
+  "example": {
+   "value": "0",
+   "explanation": "Do not cross internally."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.51-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.51"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(51)",
+      "op": "=",
+      "value": "2",
+      "raw": "tag9012(51)=2"
+     }
+    ],
+    "title": "Mode 2 has the BernX-only rejects",
+    "explanation": "Same rejects as tag 36 (cash balance, would, min part, do open).",
+    "sources": [
+     "Parameters.java:12832",
+     "Parameters.java:12839",
+     "Parameters.java:12932"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1843",
+   "Parameters.java:112",
+   "Parameters.java:13917",
+   "FlexOrderStream.java:5180"
+  ]
+ },
+ {
+  "id": "9012.52",
+  "number": "52",
+  "parent": "9012",
+  "alias": "DWG",
+  "name": "Dark with grey venues",
+  "category": "dark",
+  "description": ">0 allows grey venues to be used; otherwise grey venues are excluded from dark routing.",
+  "valueFormat": "0|1",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Include grey venues."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1848",
+   "ExchangeMaster.java:1394",
+   "oeo/LCWorker.java:165"
+  ]
+ },
+ {
+  "id": "9012.53",
+  "number": "53",
+  "parent": "9012",
+  "alias": "EF",
+  "name": "Min exec enforcement mode",
+  "category": "dark",
+  "description": "How the min fill (tag 24) is enforced on venues: >0 skips venues that do not allow the min size; >=0 applies the parameter min exec on venues with min-exec support; 2 also restricts enforce-min-exec venues to those with minExec==2.",
+  "valueFormat": "-1|0|1|2",
+  "type": "enum",
+  "allowedValues": [],
+  "default": "-1",
+  "example": {
+   "value": "2",
+   "explanation": "Strict min-fill venues only."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.53-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.53",
+     "9012.24"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(53)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(53)!=null"
+     },
+     {
+      "field": "tag9012(24)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(24)=null"
+     }
+    ],
+    "title": "Needs a min fill",
+    "explanation": "Only meaningful together with tag 24.",
+    "sources": [
+     "ExchangeMaster.java:1587"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1805",
+   "ExchangeMaster.java:2050",
+   "ExchangeMaster.java:2149",
+   "ai.fixmsg.properties:176"
+  ]
+ },
+ {
+  "id": "9012.54",
+  "number": "54",
+  "parent": "9012",
+  "alias": "SM",
+  "name": "Strike (arrival) price mode",
+  "category": "other",
+  "description": "Which price is used as the strike/arrival reference, first letter upper-cased (e.g. L = last, M = mid, C = cross; mapping per impact strike_mode 0/1/2). Default C for WOW (and when grab mode is on), else L or the impact config.",
+  "valueFormat": "L|M|C|...",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "L",
+    "meaning": "last"
+   },
+   {
+    "value": "M",
+    "meaning": "mid"
+   },
+   {
+    "value": "C",
+    "meaning": "cross"
+   }
+  ],
+  "default": "L (C for WOW)",
+  "example": {
+   "value": "M",
+   "explanation": "Strike at mid."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.54-01",
+    "kind": "rewrite",
+    "severity": "low",
+    "tags": [
+     "9012.54",
+     "9012.92"
+    ],
+    "algorithms": [
+     "SDMA",
+     "ICEDMA",
+     "DMA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(54)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(54)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "SDMA^ICEDMA^DMA",
+      "raw": "algorithm=SDMA^ICEDMA^DMA"
+     },
+     {
+      "field": "limitPriceStrUsed",
+      "op": "=",
+      "value": "0",
+      "raw": "limitPriceStrUsed=0"
+     }
+    ],
+    "title": "DMA config sets 54",
+    "explanation": "Rules write 54=C before close / 54=L otherwise together with 92.",
+    "sources": [
+     "ai.fixmsg.properties:65",
+     "ai.fixmsg.properties:67"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1859",
+   "Parameters.java:11975",
+   "Parameters.java:14106",
+   "Parameters.java:12202"
+  ]
+ },
+ {
+  "id": "9012.55",
+  "number": "55",
+  "parent": "9012",
+  "alias": "T",
+  "name": "Index tracker (relative pricing)",
+  "category": "limit-price",
+  "description": "Relative-performance tracker spec 'symbol,reftype,limit' (IndexTracker). Replaced when tags 80+82 (and 81) are given. Invalid spec rejects ('incorrect index tracker') unless close-only tracking.",
+  "valueFormat": "symbol,reftype,limit",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "HSI,CS,-50",
+   "explanation": "Track vs HSI with a 50 limit."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.55-01",
+    "kind": "override",
+    "severity": "medium",
+    "tags": [
+     "9012.55",
+     "9012.80",
+     "9012.82"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(55)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(55)!=null"
+     },
+     {
+      "field": "tag9012(80)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(80)!=null"
+     },
+     {
+      "field": "tag9012(82)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(82)!=null"
+     }
+    ],
+    "title": "80/81/82 rebuild tag 55",
+    "explanation": "If 80 and 82 are set, _index_tracker_str is rebuilt as 80,81(default CS),-|82|.",
+    "sources": [
+     "Parameters.java:12100"
+    ]
+   },
+   {
+    "id": "REL-9012.55-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.55"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(55)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(55)!=null"
+     },
+     {
+      "field": "indexTrackerValid",
+      "op": "=",
+      "value": "false",
+      "raw": "indexTrackerValid=false"
+     }
+    ],
+    "title": "Invalid tracker rejected",
+    "explanation": "'incorrect index tracker' / 'invalid index tracking parameter'.",
+    "sources": [
+     "Parameters.java:12285",
+     "Parameters.java:12820"
+    ]
+   },
+   {
+    "id": "REL-9012.55-03",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.55"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(55)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(55)!=null"
+     },
+     {
+      "field": "fixTag(109)",
+      "op": "=",
+      "value": "ELKCAP",
+      "raw": "fixTag(109)=ELKCAP"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "!=",
+      "value": "JP",
+      "raw": "compositeExchangeCode!=JP"
+     }
+    ],
+    "title": "Config sets LCR=0.05",
+    "explanation": "Rule adds LCR=0.05 for ELKCAP index-tracked orders.",
+    "sources": [
+     "ai.fixmsg.properties:147"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1866",
+   "Parameters.java:12118",
+   "Parameters.java:12306"
+  ]
+ },
+ {
+  "id": "9012.56",
+  "number": "56",
+  "parent": "9012",
+  "alias": null,
+  "name": "Include venue dark take",
+  "category": "dark",
+  "description": "1 = also try taking on dark venues (dark pings) for supported algos / new SHADOW / NDMA.",
+  "valueFormat": "0|1",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "false",
+  "example": {
+   "value": "1",
+   "explanation": "Ping dark venues when taking."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1959",
+   "oeo/ConcertStrategy.java:960",
+   "oeo/NDMAStrategy.java:122"
+  ]
+ },
+ {
+  "id": "9012.57",
+  "number": "57",
+  "parent": "9012",
+  "alias": null,
+  "name": "IOI mode",
+  "category": "dark",
+  "description": "IOI usage: mode[,workPct[,wouldIOI[,m2hCycleSec[,m2hSwapMin]]]]. Modes: 1 type-0 IOI, 2 IOI exclusively, 3/4 would-dark IOI, 5/6 M2H IOI (6 exclusive), 7/8 M2H layer (8 exclusive), 107/108 M2H swap; 11-99 = mode-10 with field 2 as shares instead of percent.",
+  "valueFormat": "mode[,pct|shares[,wouldIOI[,cycleSec[,swapMin]]]]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "0 (off)",
+  "example": {
+   "value": "1,100,1",
+   "explanation": "Type-0 IOI, 100% workable, would IOI on (APSHADOW template)."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.57-01",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.57"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(57)",
+      "op": "!=",
+      "value": "null^0",
+      "raw": "tag9012(57)!=null^0"
+     },
+     {
+      "field": "tag9012(LIQH)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(LIQH)=null"
+     }
+    ],
+    "title": "Config sets LIQH=1",
+    "explanation": "Rule writes LIQH=1 when 57 is set.",
+    "sources": [
+     "ai.fixmsg.properties:374"
+    ]
+   },
+   {
+    "id": "REL-9012.57-02",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.57"
+    ],
+    "algorithms": [
+     "SHADOW"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(57)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(57)!=null"
+     },
+     {
+      "field": "ioi_mode",
+      "op": ">",
+      "value": "0",
+      "raw": "ioi_mode>0"
+     }
+    ],
+    "title": "Disables split MET",
+    "explanation": "setSplitMET requires ioi_mode<=0.",
+    "sources": [
+     "Parameters.java:10970"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1963",
+   "Parameters.java:2012",
+   "ExchangeMaster.java:1338",
+   "oeo/IoIWorker.java:286"
+  ]
+ },
+ {
+  "id": "9012.58",
+  "number": "58",
+  "parent": "9012",
+  "alias": "CAP",
+  "name": "PART2 market-cap threshold / CUSTOM convert",
+  "category": "market-specific",
+  "description": "PART2: market-cap threshold in $bn (default 3.5) below which lit rates are halved (when tag 61 is not used). 'C...'/'CUSTOM' makes the algo be converted by a CUSTOM step table in 9060 keyed on market cap.",
+  "valueFormat": "number | CUSTOM",
+  "type": "string",
+  "allowedValues": [],
+  "default": "3.5 (PART2)",
+  "example": {
+   "value": "5",
+   "explanation": "Halve lit rates for caps below $5bn."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.58-01",
+    "kind": "conversion",
+    "severity": "high",
+    "tags": [
+     "9012.58",
+     "9060"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(58)",
+      "op": "~",
+      "value": "^C",
+      "raw": "tag9012(58)~^C"
+     }
+    ],
+    "title": "CUSTOM algo conversion",
+    "explanation": "With a C value 9060 is used as a custom convert table; the order is re-parsed with the selected algo string, or rejected if it starts with REJECT.",
+    "sources": [
+     "Parameters.java:11344",
+     "Parameters.java:11352",
+     "Parameters.java:12506"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2058",
+   "Parameters.java:12576"
+  ]
+ },
+ {
+  "id": "9012.59",
+  "number": "59",
+  "parent": "9012",
+  "alias": null,
+  "name": "Return if out of market (OOM)",
+  "category": "risk-control",
+  "description": "Reaction when price moves beyond the tag 70 benchmark: 1 (or T/Y) = reject/return the order, 2 = switch to the 9060 sub-algo (SWITCH_ALGO_OOM relay), 3 = halt while out of range and resume. Values >10 use value%10 in warn-only mode (no reject).",
+  "valueFormat": "0|1|2|3|T|Y|1x",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "1",
+    "meaning": "return order"
+   },
+   {
+    "value": "2",
+    "meaning": "switch algo"
+   },
+   {
+    "value": "3",
+    "meaning": "halt when out of range"
+   }
+  ],
+  "default": "0; when this tag is absent: Config sets 59=1 when 70 present (ai.fixmsg.properties:308)",
+  "example": {
+   "value": "1",
+   "explanation": "Cancel back if price moves too far."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.59-01",
+    "kind": "requires",
+    "severity": "high",
+    "tags": [
+     "9012.59",
+     "9060"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(59)",
+      "op": "=",
+      "value": "2",
+      "raw": "tag9012(59)=2"
+     },
+     {
+      "field": "fixTag(9060)",
+      "op": "=",
+      "value": "null",
+      "raw": "fixTag(9060)=null"
+     }
+    ],
+    "title": "Mode 2 needs a 9060 sub-algo",
+    "explanation": "'incorrect return if oom param'.",
+    "sources": [
+     "Parameters.java:12291"
+    ]
+   },
+   {
+    "id": "REL-9012.59-02",
+    "kind": "conversion",
+    "severity": "medium",
+    "tags": [
+     "9012.59"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(59)",
+      "op": "=",
+      "value": "2",
+      "raw": "tag9012(59)=2"
+     }
+    ],
+    "title": "Uses SWITCH_ALGO_OOM relay",
+    "explanation": "Uses SWITCH_ALGO_OOM relay.",
+    "sources": [
+     "Parameters.java:12308"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2068",
+   "FlexOrderStream.java:16799",
+   "FlexOrderStream.java:16330",
+   "FlexOrderStream.java:11724",
+   "ai.fixmsg.properties:308"
+  ]
+ },
+ {
+  "id": "9012.61",
+  "number": "61",
+  "parent": "9012",
+  "alias": null,
+  "name": "PART2 %ADV threshold / CUSTOM convert",
+  "category": "market-specific",
+  "description": "PART2: if order size exceeds this %ADV the lit rates are halved. GNR (converted): if order %ADV is below it the algo reverts to GNR. 'C...'/'CUSTOM'/'C-TSW' trigger custom conversion (C-TSW uses a fixed TSW table by cap and %ADV).",
+  "valueFormat": "percent | CUSTOM | C-TSW",
+  "type": "string",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "2",
+   "explanation": "Halve lit rates if order > 2% ADV."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.61-01",
+    "kind": "conversion",
+    "severity": "high",
+    "tags": [
+     "9012.61",
+     "9060"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(61)",
+      "op": "~",
+      "value": "^C",
+      "raw": "tag9012(61)~^C"
+     }
+    ],
+    "title": "CUSTOM / TSW conversion",
+    "explanation": "Order re-parsed with algo chosen by %ADV; TSW returns e.g. 1=PASS / 1=LINE^5=5^6=25 / SHADOWMIN or 'reject: TSW CUSTOM not in range'.",
+    "sources": [
+     "Parameters.java:12393",
+     "Parameters.java:12401",
+     "Parameters.java:11355"
+    ]
+   },
+   {
+    "id": "REL-9012.61-02",
+    "kind": "conversion",
+    "severity": "medium",
+    "tags": [
+     "9012.61"
+    ],
+    "algorithms": [
+     "GNR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(61)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(61)!=null"
+     },
+     {
+      "field": "clientAlgorithm",
+      "op": "=",
+      "value": "GNR",
+      "raw": "clientAlgorithm=GNR"
+     }
+    ],
+    "title": "GNR revert by %ADV",
+    "explanation": "GNR revert by %ADV.",
+    "sources": [
+     "Parameters.java:12591"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2063",
+   "Parameters.java:12576"
+  ]
+ },
+ {
+  "id": "9012.62",
+  "number": "62",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair spread value",
+  "category": "compound",
+  "description": "Spread threshold for the pair (meaning per tag 44), optionally with currency unit '<value><CCY>[/<CCY>]'. Invalid currency rejects. In compound mode 5 defaults to the tracker's first threshold.",
+  "valueFormat": "<number>[CCY[/CCY]]",
+  "type": "string",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "0.5USD",
+   "explanation": "Spread of 0.50 USD."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.62-01",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.62"
+    ],
+    "algorithms": [
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(62)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(62)!=null"
+     }
+    ],
+    "title": "Must match on both legs",
+    "explanation": "'pair tag 62 conflict'.",
+    "sources": [
+     "Parameters.java:14808"
+    ]
+   },
+   {
+    "id": "REL-9012.62-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.62"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(62)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(62)!=null"
+     },
+     {
+      "field": "currencyValid",
+      "op": "=",
+      "value": "false",
+      "raw": "currencyValid=false"
+     }
+    ],
+    "title": "Invalid currency",
+    "explanation": "'pair param unit currency invalid'.",
+    "sources": [
+     "Parameters.java:1262"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2138",
+   "Parameters.java:1239",
+   "Parameters.java:14613",
+   "Parameters.java:12234"
+  ]
+ },
+ {
+  "id": "9012.63",
+  "number": "63",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair spread bps reference",
+  "category": "compound",
+  "description": "Reference price for spread mode 2: CLO (prev close) / 1, OPN (open) / 2, STR (strike) / 3, or '4,<price>' client strike.",
+  "valueFormat": "CLO|OPN|STR|1|2|3|4,<price>",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "CLO",
+    "meaning": "prev close"
+   },
+   {
+    "value": "OPN",
+    "meaning": "open"
+   },
+   {
+    "value": "STR",
+    "meaning": "strike"
+   },
+   {
+    "value": "4,<p>",
+    "meaning": "client strike"
+   }
+  ],
+  "default": "none",
+  "example": {
+   "value": "CLO",
+   "explanation": "Spread bps vs previous close."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2203",
+   "Parameters.java:2098",
+   "Parameters.java:14737",
+   "Parameters.java:12854"
+  ]
+ },
+ {
+  "id": "9012.64",
+  "number": "64",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair balance ratio",
+  "category": "compound",
+  "description": "Buy/sell balance ratio used when tag 47=1 (copied to cash ratio), with optional currency unit.",
+  "valueFormat": "<number>[CCY[/CCY]]",
+  "type": "string",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "1",
+   "explanation": "Equal notional."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2207",
+   "Parameters.java:11992"
+  ]
+ },
+ {
+  "id": "9012.67",
+  "number": "67",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair lead side",
+  "category": "compound",
+  "description": "Which side leads in a pair (>0 enables leading); with pair_lead_mode>0 makes doCashOPE()=1.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Buy leg leads."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2191",
+   "Parameters.java:13948",
+   "OrderHolder.java:1485"
+  ]
+ },
+ {
+  "id": "9012.68",
+  "number": "68",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair lead size",
+  "category": "compound",
+  "description": "How much the leading leg may get ahead: shares (tag 69=0) or percent of executed (tag 69=1).",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "500",
+   "explanation": "Lead by up to 500 shares."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2195",
+   "OrderRegulation.java:555",
+   "OrderRegulation.java:558",
+   "OrderRegulation.java:565"
+  ]
+ },
+ {
+  "id": "9012.69",
+  "number": "69",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair lead size type",
+  "category": "compound",
+  "description": "Unit of tag 68: 0 = shares over balance size, 1 = percent of current executions.",
+  "valueFormat": "0|1",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "shares"
+   },
+   {
+    "value": "1",
+    "meaning": "percent"
+   }
+  ],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Tag 68 in percent."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2199",
+   "OrderRegulation.java:555"
+  ]
+ },
+ {
+  "id": "9012.70",
+  "number": "70",
+  "parent": "9012",
+  "alias": null,
+  "name": "Return-if-OOM benchmark",
+  "category": "risk-control",
+  "description": "Benchmark for tag 59: a price, a reference type (e.g. C close, S strike), or 'ref[,userPrice][,B|C],neg[,pos]' giving bps/cents range; mode 5 form 'ref,p1,p2' gives two prices. Parse errors reject.",
+  "valueFormat": "<price> | <ref>[,<price>][,B|C],<neg>[,<pos>]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "S,B,500",
+   "explanation": "500 bps from strike (STEWFS template)."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.70-01",
+    "kind": "requires",
+    "severity": "high",
+    "tags": [
+     "9012.70",
+     "9012.92"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(70)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(70)!=null"
+     },
+     {
+      "field": "tag9012(92)",
+      "op": "~",
+      "value": "^H?R",
+      "raw": "tag9012(92)~^H?R"
+     }
+    ],
+    "title": "Needed by 92=R",
+    "explanation": "'no tag 70 with 92=R' / 'no tag 70 price room with 92=R'.",
+    "sources": [
+     "Parameters.java:12918"
+    ]
+   },
+   {
+    "id": "REL-9012.70-02",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.70",
+     "9012.59"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(70)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(70)!=null"
+     },
+     {
+      "field": "tag9012(59)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(59)=null"
+     }
+    ],
+    "title": "Config turns on 59=1",
+    "explanation": "Config turns on 59=1.",
+    "sources": [
+     "ai.fixmsg.properties:308"
+    ]
+   },
+   {
+    "id": "REL-9012.70-03",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.70"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(70)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(70)!=null"
+     }
+    ],
+    "title": "Malformed benchmark rejected",
+    "explanation": "'error parsing return if oom'.",
+    "sources": [
+     "Parameters.java:1343"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2080",
+   "Parameters.java:1287"
+  ]
+ },
+ {
+  "id": "9012.71",
+  "number": "71",
+  "parent": "9012",
+  "alias": "CBL",
+  "name": "Cash buy lead",
+  "category": "compound",
+  "description": "Maximum amount buys may lead sells in cash balancing (dollar; 'P' suffix = percent of value, with min_cash_lead floor).",
+  "valueFormat": "<number>[P]",
+  "type": "string",
+  "allowedValues": [],
+  "default": "-1 (none)",
+  "example": {
+   "value": "100000",
+   "explanation": "Buys may lead by $100k."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.71-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.71",
+     "9012.21"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(71)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(71)!=null"
+     },
+     {
+      "field": "tag9012(21)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(21)!=null"
+     },
+     {
+      "field": "doCash",
+      "op": ">",
+      "value": "0",
+      "raw": "doCash>0"
+     }
+    ],
+    "title": "Cannot coexist with tolerance",
+    "explanation": "'cash-balance ratio tolerance and dollar bounds cannot coexist'.",
+    "sources": [
+     "Parameters.java:12836"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1740",
+   "Parameters.java:13990",
+   "OrderHolder.java:1889"
+  ]
+ },
+ {
+  "id": "9012.72",
+  "number": "72",
+  "parent": "9012",
+  "alias": "CSL",
+  "name": "Cash sell lead",
+  "category": "compound",
+  "description": "Maximum amount sells may lead buys in cash balancing ('P' suffix = percent).",
+  "valueFormat": "<number>[P]",
+  "type": "string",
+  "allowedValues": [],
+  "default": "-1 (none)",
+  "example": {
+   "value": "5P",
+   "explanation": "Sells may lead by 5%."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.72-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.72",
+     "9012.21"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(72)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(72)!=null"
+     },
+     {
+      "field": "tag9012(21)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(21)!=null"
+     },
+     {
+      "field": "doCash",
+      "op": ">",
+      "value": "0",
+      "raw": "doCash>0"
+     }
+    ],
+    "title": "Cannot coexist with tolerance",
+    "explanation": "Cannot coexist with tolerance.",
+    "sources": [
+     "Parameters.java:12836"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1750",
+   "OrderHolder.java:1894"
+  ]
+ },
+ {
+  "id": "9012.73",
+  "number": "73",
+  "parent": "9012",
+  "alias": null,
+  "name": "Iceberg display size",
+  "category": "posting",
+  "description": "Iceberg/display size: size[,mode[,randomize]]. Size = shares, AVG<n> = n x average trade size, AQS<f> = f x average quote size. Mode default from OEO config per exchange; randomize factor.",
+  "valueFormat": "<shares>|AVG<n>|AQS<f>[,mode[,randomize]]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "AVG2,1,0.2",
+   "explanation": "Show 2x avg trade size, randomized 20%."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.73-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.73"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(73)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(73)!=null"
+     },
+     {
+      "field": "js",
+      "op": "js",
+      "value": "size < roundLotSize",
+      "raw": "<js>size < roundLotSize</js>"
+     }
+    ],
+    "title": "Config KO: iceberg less than round lot",
+    "explanation": "Config KO: iceberg less than round lot.",
+    "sources": [
+     "ai.fixmsg.properties:449"
+    ]
+   },
+   {
+    "id": "REL-9012.73-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.73",
+     "9012.104"
+    ],
+    "algorithms": [
+     "DMA",
+     "SDMA",
+     "ICEDMA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(73)",
+      "op": "!=",
+      "value": "null^0",
+      "raw": "tag9012(73)!=null^0"
+     },
+     {
+      "field": "price",
+      "op": "<",
+      "value": "0.000001",
+      "raw": "price<0.000001"
+     },
+     {
+      "field": "tag9012(104)",
+      "op": "!=",
+      "value": "1",
+      "raw": "tag9012(104)!=1"
+     }
+    ],
+    "title": "Config KO: DMA market order with display",
+    "explanation": "Config KO: DMA market order with display.",
+    "sources": [
+     "ai.fixmsg.properties:473"
+    ]
+   },
+   {
+    "id": "REL-9012.73-03",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.73"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(73)",
+      "op": "~",
+      "value": "^AVG",
+      "raw": "tag9012(73)~^AVG"
+     },
+     {
+      "field": "avgTradeSize",
+      "op": "<",
+      "value": "1",
+      "raw": "avgTradeSize<1"
+     }
+    ],
+    "title": "AVG with no avg trade size rejected",
+    "explanation": "'iceberg using AVG tradesize with invalid data'.",
+    "sources": [
+     "FlexOrderStream.java:13941"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2220",
+   "Parameters.java:2244",
+   "Parameters.java:12633",
+   "Parameters.java:14907"
+  ]
+ },
+ {
+  "id": "9012.74",
+  "number": "74",
+  "parent": "9012",
+  "alias": null,
+  "name": "Compound reference price",
+  "category": "compound",
+  "description": "Reference type/price for the compound algo tracker (overrides the reference in the 9060 header; 'ref,price' for user input).",
+  "valueFormat": "<reftype>[,<price>]",
+  "type": "string",
+  "allowedValues": [],
+  "default": "from 9060 header",
+  "example": {
+   "value": "S",
+   "explanation": "Strike as reference."
+  },
+  "appliesTo": [
+   "COMPOUND"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2285",
+   "Parameters.java:12240",
+   "CompoundAlgoTracker.java:132",
+   "CompoundAlgoTracker.java:140"
+  ]
+ },
+ {
+  "id": "9012.75",
+  "number": "75",
+  "parent": "9012",
+  "alias": null,
+  "name": "SHADOWMIN post loud",
+  "category": "posting",
+  "description": ">0 allows SHADOWMIN (and SHADOW with a min rate) to post visibly; otherwise those algos avoid lit posting.",
+  "valueFormat": "0|1",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Allow lit posting."
+  },
+  "appliesTo": [
+   "SHADOW",
+   "SHADOWMIN"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2289",
+   "ExchangeMaster.java:872",
+   "oeo/ConcertStrategy.java:211"
+  ]
+ },
+ {
+  "id": "9012.76",
+  "number": "76",
+  "parent": "9012",
+  "alias": null,
+  "name": "Block first 100 shares",
+  "category": "risk-control",
+  "description": "Controls the first-100-shares block; >0 enables it. Ignored (0) when cash balancing. Default from AlgoConfig block_first_100_shares.",
+  "valueFormat": "0|1|2",
+  "type": "int",
+  "allowedValues": [],
+  "default": "config block_first_100_shares; when this tag is absent: Config defaults 76=0 (ai.fixmsg.properties:274, ai.fixmsg.properties:438, ai.fixmsg.properties:295)",
+  "example": {
+   "value": "0",
+   "explanation": "Do not block."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2293",
+   "Parameters.java:14940",
+   "Candidate.java:500",
+   "ExecutionOptimizer.java:284",
+   "ai.fixmsg.properties:274",
+   "ai.fixmsg.properties:438",
+   "ai.fixmsg.properties:295"
+  ]
+ },
+ {
+  "id": "9012.77",
+  "number": "77",
+  "parent": "9012",
+  "alias": null,
+  "name": "VWAP catch-up mode / profile params",
+  "category": "schedule",
+  "description": "First field = VWAP catch-up mode (default config for scheduled algos); further fields KEY=VALUE override profile parameters (HM, AM, PA, PB, PD, PR, MSP, MCP, ...).",
+  "valueFormat": "mode[,KEY=VAL...]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "config vwap_catchup_mode (scheduled)",
+  "example": {
+   "value": "1,PD=3",
+   "explanation": "Catch-up mode 1, PD=3."
+  },
+  "appliesTo": [
+   "VWAP",
+   "TMX"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2298",
+   "Parameters.java:15028"
+  ]
+ },
+ {
+  "id": "9012.78",
+  "number": "78",
+  "parent": "9012",
+  "alias": null,
+  "name": "Portfolio price tracker limit",
+  "category": "compound",
+  "description": "Limit string for the portfolio price-move tracker (PortfolioPMTracker); tracker needs 84 and one of 78/96/85.",
+  "valueFormat": "string",
+  "type": "string",
+  "allowedValues": [],
+  "default": "",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2328",
+   "Parameters.java:12122"
+  ]
+ },
+ {
+  "id": "9012.79",
+  "number": "79",
+  "parent": "9012",
+  "alias": null,
+  "name": "Index tracker adaption",
+  "category": "limit-price",
+  "description": "Adaptation mode for relative trading: 1/trend, 2/reverse, 3/OTD, 4/PAR, 5, 6, 7. For LINE it changes the impact child algo (3/4 convert to VWAP with VWAPRELATIVE; 5/6 LINERELATIVE[_HIST]; 7 LINERELATIVE_OTD); TMX -> TMXRELATIVE, VWAP -> VWAPRELATIVE.",
+  "valueFormat": "1-7|trend|reverse|OTD|PAR",
+  "type": "enum",
+  "allowedValues": [],
+  "default": "none; when this tag is absent: ARROWST requires 79/80/82 (ai.fixmsg.properties:40, AI-FIXMSG-CONFLICTS.md:47)",
+  "example": {
+   "value": "1",
+   "explanation": "Trend following."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.79-01",
+    "kind": "conversion",
+    "severity": "high",
+    "tags": [
+     "9012.79",
+     "9012.55"
+    ],
+    "algorithms": [
+     "LINE"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(79)",
+      "op": "=",
+      "value": "3^4^OTD^PAR",
+      "raw": "tag9012(79)=3^4^OTD^PAR"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "LINE",
+      "raw": "algorithm=LINE"
+     }
+    ],
+    "title": "LINE converted to VWAP",
+    "explanation": "LINE converted to VWAP.",
+    "sources": [
+     "Parameters.java:12328"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1870",
+   "Parameters.java:12098",
+   "CandidateProcessor.java:2075",
+   "ai.fixmsg.properties:40",
+   "AI-FIXMSG-CONFLICTS.md:47"
+  ]
+ },
+ {
+  "id": "9012.80",
+  "number": "80",
+  "parent": "9012",
+  "alias": null,
+  "name": "Index tracker symbol",
+  "category": "limit-price",
+  "description": "Symbol to track; with tag 82 builds the index tracker (55 format).",
+  "valueFormat": "symbol",
+  "type": "string",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "HSI",
+   "explanation": "Index tracker symbol = HSI."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1905",
+   "Parameters.java:12100"
+  ]
+ },
+ {
+  "id": "9012.81",
+  "number": "81",
+  "parent": "9012",
+  "alias": null,
+  "name": "Index tracker reference type",
+  "category": "limit-price",
+  "description": "Reference type for the tracker built from 80/82.",
+  "valueFormat": "reftype",
+  "type": "string",
+  "allowedValues": [],
+  "default": "CS",
+  "example": {
+   "value": "CS",
+   "explanation": "Index tracker reference type = CS."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1909",
+   "Parameters.java:12103"
+  ]
+ },
+ {
+  "id": "9012.82",
+  "number": "82",
+  "parent": "9012",
+  "alias": null,
+  "name": "Index tracker limit",
+  "category": "limit-price",
+  "description": "Relative limit for the tracker built from 80; stored as negative absolute value.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "50",
+   "explanation": "Limit 50 (stored -50)."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1913",
+   "Parameters.java:12107"
+  ]
+ },
+ {
+  "id": "9012.83",
+  "number": "83",
+  "parent": "9012",
+  "alias": null,
+  "name": "Portfolio price tracker mode",
+  "category": "compound",
+  "description": "Mode string for PortfolioPMTracker.",
+  "valueFormat": "string",
+  "type": "string",
+  "allowedValues": [],
+  "default": "",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2340",
+   "Parameters.java:12126"
+  ]
+ },
+ {
+  "id": "9012.84",
+  "number": "84",
+  "parent": "9012",
+  "alias": null,
+  "name": "Portfolio price tracker reference type",
+  "category": "compound",
+  "description": "Reference type for PortfolioPMTracker; required for the tracker to be created.",
+  "valueFormat": "string",
+  "type": "string",
+  "allowedValues": [],
+  "default": "",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.84-01",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.84"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(84)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(84)!=null"
+     }
+    ],
+    "title": "Invalid tracker rejected",
+    "explanation": "'price-tracked portfolio invalid input'.",
+    "sources": [
+     "Parameters.java:12845"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2344",
+   "Parameters.java:12122"
+  ]
+ },
+ {
+  "id": "9012.85",
+  "number": "85",
+  "parent": "9012",
+  "alias": null,
+  "name": "Portfolio would limit",
+  "category": "compound",
+  "description": "Would limit string for PortfolioPMTracker.",
+  "valueFormat": "string",
+  "type": "string",
+  "allowedValues": [],
+  "default": "",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2348",
+   "Parameters.java:12122"
+  ]
+ },
+ {
+  "id": "9012.86",
+  "number": "86",
+  "parent": "9012",
+  "alias": "IDT",
+  "name": "Target order id (resubmit)",
+  "category": "internal",
+  "description": "Id of the original (cancelled) order this order resubmits; scale tracker rules relax and history is looked up.",
+  "valueFormat": "order id",
+  "type": "string",
+  "allowedValues": [],
+  "default": "none",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2666",
+   "Parameters.java:377",
+   "Parameters.java:12279",
+   "FlexOrderStream.java:14424"
+  ]
+ },
+ {
+  "id": "9012.87",
+  "number": "87",
+  "parent": "9012",
+  "alias": null,
+  "name": "Dark venue chase control mode",
+  "category": "dark",
+  "description": "Controls chasing on dark venues; mode 3 enforces a minimum candidate duration for NINJA-like algos and alters regulation.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1",
+  "example": {
+   "value": "3",
+   "explanation": "Dark venue chase control mode = 3."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2357",
+   "CandidateProcessor.java:2281",
+   "CandidateRegulator.java:907",
+   "OrderRegulation.java:301"
+  ]
+ },
+ {
+  "id": "9012.88",
+  "number": "88",
+  "parent": "9012",
+  "alias": null,
+  "name": "Impact child algorithm (CAIID)",
+  "category": "algorithm",
+  "description": "Overrides the impact child algorithm (upper-cased algorithm name). In the config file the value is also used as a client template key (PORT, SgaMoc, APSHADOWn, MFSIS, CLOSEB...).",
+  "valueFormat": "algorithm name",
+  "type": "string",
+  "allowedValues": [],
+  "default": "impact algorithm",
+  "example": {
+   "value": "VWAPRELATIVE",
+   "explanation": "Impact child algorithm (CAIID) = VWAPRELATIVE."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.88-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.88",
+     "9012.1"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(88)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(88)!=null"
+     }
+    ],
+    "title": "Template key in config",
+    "explanation": "Rules match tag9012(88)=... to apply client templates.",
+    "sources": [
+     "ai.fixmsg.properties:206",
+     "ai.fixmsg.properties:316",
+     "ai.fixmsg.properties:344"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2369",
+   "Parameters.java:12324"
+  ]
+ },
+ {
+  "id": "9012.89",
+  "number": "89",
+  "parent": "9012",
+  "alias": null,
+  "name": "Ninja limit percent",
+  "category": "limit-price",
+  "description": "Stored and reported only (order info / toString); no other use found.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2373",
+   "OrderHolder.java:1054"
+  ]
+ },
+ {
+  "id": "9012.90",
+  "number": "90",
+  "parent": "9012",
+  "alias": null,
+  "name": "Strike time",
+  "category": "other",
+  "description": "Clock time at which the strike price is set (min 5 chars), timezone converted.",
+  "valueFormat": "HH:MM:SS",
+  "type": "time",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "09:30:00",
+   "explanation": "Strike time = 09:30:00."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2381",
+   "FlexOrderStream.java:13924"
+  ]
+ },
+ {
+  "id": "9012.91",
+  "number": "91",
+  "parent": "9012",
+  "alias": null,
+  "name": "Sector balance",
+  "category": "compound",
+  "description": "0 = none, 1 = cash balance within sector using portfolio ratio, 2 = within sector using sector ratio.",
+  "valueFormat": "0|1|2",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "none"
+   },
+   {
+    "value": "1",
+    "meaning": "portfolio ratio"
+   },
+   {
+    "value": "2",
+    "meaning": "sector ratio"
+   }
+  ],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Sector balance = 1."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1736",
+   "Parameters.java:13953",
+   "OrderHolder.java:107"
+  ]
+ },
+ {
+  "id": "9012.92",
+  "number": "92",
+  "parent": "9012",
+  "alias": null,
+  "name": "Limit price from reference",
+  "category": "limit-price",
+  "description": "Derives a limit price from a reference: [H]<ref>,<percent>,<ticks>,<mode>. H = hard limit. A leading digit is treated as 'C,<...>'. Refs seen in code/config: C, O (open), R (uses tag 70 benchmark), S. Parse errors clear it silently.",
+  "valueFormat": "[H]<ref>,<pct>[,<ticks>[,<mode>]]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "none",
+  "example": {
+   "value": "S,5",
+   "explanation": "Limit 5% from S reference (config default)."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.92-01",
+    "kind": "rewrite",
+    "severity": "medium",
+    "tags": [
+     "9012.92",
+     "9012.14"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(92)",
+      "op": "~",
+      "value": "^H?O",
+      "raw": "tag9012(92)~^H?O"
+     }
+    ],
+    "title": "Better than open cancels do-open",
+    "explanation": "Better than open cancels do-open.",
+    "sources": [
+     "Parameters.java:1939"
+    ]
+   },
+   {
+    "id": "REL-9012.92-02",
+    "kind": "requires",
+    "severity": "high",
+    "tags": [
+     "9012.92",
+     "9012.70"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(92)",
+      "op": "~",
+      "value": "^H?R",
+      "raw": "tag9012(92)~^H?R"
+     },
+     {
+      "field": "tag9012(70)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(70)=null"
+     }
+    ],
+    "title": "R needs tag 70",
+    "explanation": "R needs tag 70.",
+    "sources": [
+     "Parameters.java:12918"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:1917",
+   "Parameters.java:14237",
+   "oeo/DMAStrategy.java:699",
+   "AI-FIXMSG-CONFLICTS.md:95"
+  ]
+ },
+ {
+  "id": "9012.93",
+  "number": "93",
+  "parent": "9012",
+  "alias": null,
+  "name": "Ninja limit mode",
+  "category": "limit-price",
+  "description": "Stored/reported only; no further use found.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2377",
+   "OrderHolder.java:1055"
+  ]
+ },
+ {
+  "id": "9012.94",
+  "number": "94",
+  "parent": "9012",
+  "alias": null,
+  "name": "Allowed impact (bps)",
+  "category": "risk-control",
+  "description": "Maximum impact vs strike in bps; candidates are limited to respect it.",
+  "valueFormat": "bps",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0 (off)",
+  "example": {
+   "value": "20",
+   "explanation": "Allowed impact (bps) = 20."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2390",
+   "CandidateProcessor.java:389"
+  ]
+ },
+ {
+  "id": "9012.95",
+  "number": "95",
+  "parent": "9012",
+  "alias": null,
+  "name": "Market view",
+  "category": "other",
+  "description": "Stored/reported only.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2394",
+   "OrderHolder.java:1531"
+  ]
+ },
+ {
+  "id": "9012.96",
+  "number": "96",
+  "parent": "9012",
+  "alias": null,
+  "name": "Portfolio price tracker start",
+  "category": "compound",
+  "description": "Start string for PortfolioPMTracker.",
+  "valueFormat": "string",
+  "type": "string",
+  "allowedValues": [],
+  "default": "",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2332",
+   "Parameters.java:12122"
+  ]
+ },
+ {
+  "id": "9012.97",
+  "number": "97",
+  "parent": "9012",
+  "alias": null,
+  "name": "Execution style",
+  "category": "compound",
+  "description": "Pair/execution style integer; used in config conditions (PAIR 97=2 -> BCUS=3^OCASH=1).",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.97-01",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.97"
+    ],
+    "algorithms": [
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(97)",
+      "op": "=",
+      "value": "2",
+      "raw": "tag9012(97)=2"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "PAIR",
+      "raw": "algorithm=PAIR"
+     }
+    ],
+    "title": "Config sets BCUS/OCASH",
+    "explanation": "Config sets BCUS/OCASH.",
+    "sources": [
+     "ai.fixmsg.properties:81"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2118",
+   "Parameters.java:14655"
+  ]
+ },
+ {
+  "id": "9012.98",
+  "number": "98",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair deal ratio",
+  "category": "compound",
+  "description": "Pair ratios 'r1[,r2]'; swapped per 46 and deal side. Must match on both legs.",
+  "valueFormat": "r1[,r2]",
+  "type": "string",
+  "allowedValues": [],
+  "default": "-1",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.98-01",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.98"
+    ],
+    "algorithms": [
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(98)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(98)!=null"
+     }
+    ],
+    "title": "Must match on both legs",
+    "explanation": "Must match on both legs.",
+    "sources": [
+     "Parameters.java:14811"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2154",
+   "Parameters.java:11997"
+  ]
+ },
+ {
+  "id": "9012.99",
+  "number": "99",
+  "parent": "9012",
+  "alias": null,
+  "name": "Pair deal cash",
+  "category": "compound",
+  "description": "Cash adjustments 'c1[CCY][,c2[CCY]]' for spread modes 3-5. Must match on both legs.",
+  "valueFormat": "c1[,c2]",
+  "type": "string",
+  "allowedValues": [],
+  "default": "none",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.99-01",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.99"
+    ],
+    "algorithms": [
+     "PAIR"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(99)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(99)!=null"
+     }
+    ],
+    "title": "Must match on both legs",
+    "explanation": "Must match on both legs.",
+    "sources": [
+     "Parameters.java:14815"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2166",
+   "Parameters.java:11997"
+  ]
+ },
+ {
+  "id": "9012.100",
+  "number": "100",
+  "parent": "9012",
+  "alias": null,
+  "name": "Scale start price",
+  "category": "limit-price",
+  "description": "SCALE: start price of the scale ladder.",
+  "valueFormat": "price",
+  "type": "price",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "SCALE"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.100-01",
+    "kind": "conversion",
+    "severity": "medium",
+    "tags": [
+     "9012.100"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(100)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(100)!=null"
+     },
+     {
+      "field": "fixTag(9060)",
+      "op": "=",
+      "value": "null",
+      "raw": "fixTag(9060)=null"
+     }
+    ],
+    "title": "Uses SCALE relay",
+    "explanation": "Scale tracker set -> RelayAlgorithm.SCALE.",
+    "sources": [
+     "Parameters.java:12248",
+     "Parameters.java:12304"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2398",
+   "Parameters.java:12884"
+  ]
+ },
+ {
+  "id": "9012.101",
+  "number": "101",
+  "parent": "9012",
+  "alias": null,
+  "name": "Scale end price",
+  "category": "limit-price",
+  "description": "SCALE: end price of the scale ladder.",
+  "valueFormat": "price",
+  "type": "price",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "SCALE"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2402",
+   "Parameters.java:12248"
+  ]
+ },
+ {
+  "id": "9012.102",
+  "number": "102",
+  "parent": "9012",
+  "alias": null,
+  "name": "Scale increment",
+  "category": "limit-price",
+  "description": "SCALE: price increment between steps.",
+  "valueFormat": "string",
+  "type": "string",
+  "allowedValues": [],
+  "default": "none",
+  "example": null,
+  "appliesTo": [
+   "SCALE"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2410",
+   "Parameters.java:12248"
+  ]
+ },
+ {
+  "id": "9012.103",
+  "number": "103",
+  "parent": "9012",
+  "alias": null,
+  "name": "Scale exec mode",
+  "category": "limit-price",
+  "description": "SCALE execution mode passed to the ScaleAlgoTracker (its value meanings are in ScaleAlgoTracker, whose source is not in this tree). Compared on resubmission against order history.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "SCALE"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2414",
+   "Parameters.java:12251",
+   "FlexOrderStream.java:14446"
+  ]
+ },
+ {
+  "id": "9012.104",
+  "number": "104",
+  "parent": "9012",
+  "alias": null,
+  "name": "Ignore limit price check",
+  "category": "risk-control",
+  "description": "Values 1 or 5 skip checkVwapVolume (the market-order VWAP volume sanity check for scheduled algos). The config also adds 104=1 when converting DMA limit orders to DLP and exempts 104=1 from the 'Smart DMA order with No Limit and a Display Size' KO.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Skip the VWAP volume check."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.104-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.104",
+     "9012.73"
+    ],
+    "algorithms": [
+     "DMA",
+     "SDMA",
+     "ICEDMA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(104)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(104)=1"
+     }
+    ],
+    "title": "Avoids display KO",
+    "explanation": "Avoids display KO.",
+    "sources": [
+     "ai.fixmsg.properties:473"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2418",
+   "FlexOrderStream.java:13310"
+  ]
+ },
+ {
+  "id": "9012.105",
+  "number": "105",
+  "parent": "9012",
+  "alias": null,
+  "name": "Compound switch fraction",
+  "category": "compound",
+  "description": "Percent (stored x0.01) that turns on two-state switching in the compound algo tracker: the tracker moves from state 0 to 1 when the price diff reaches threshold[1]*(switchNumber+1), and back per tag 108.",
+  "valueFormat": "percent",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "50",
+   "explanation": "Switch with 50% fraction."
+  },
+  "appliesTo": [
+   "COMPOUND"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.105-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.105"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(105)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(105)>0"
+     }
+    ],
+    "title": "Switching has strict requirements",
+    "explanation": "checkForError rejects unless there is a compound algo tracker, the client algo is SWITCHER, fraction <=100%, exactly 2 states and a positive second threshold.",
+    "sources": [
+     "Parameters.java:12858"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2426",
+   "CompoundAlgoTracker.java:351",
+   "Parameters.java:12240"
+  ]
+ },
+ {
+  "id": "9012.106",
+  "number": "106",
+  "parent": "9012",
+  "alias": null,
+  "name": "Compound switch threshold",
+  "category": "compound",
+  "description": "When >0 replaces the second threshold of the compound algo tracker (the switch level).",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "COMPOUND"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2422",
+   "CompoundAlgoTracker.java:190",
+   "Parameters.java:12240"
+  ]
+ },
+ {
+  "id": "9012.107",
+  "number": "107",
+  "parent": "9012",
+  "alias": null,
+  "name": "Composite quote mode",
+  "category": "market-specific",
+  "description": ">0 makes the order use composite VWAP (cvwap) instead of primary VWAP for price references.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1",
+  "example": {
+   "value": "1",
+   "explanation": "Use composite VWAP."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.107-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.107"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(107)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(107)>0"
+     },
+     {
+      "field": "custom_composite_mode",
+      "op": "=",
+      "value": "0",
+      "raw": "custom_composite_mode=0"
+     }
+    ],
+    "title": "Rejected unless the environment supports it",
+    "explanation": "'composite quote not supported in this env' when custom_composite_mode is 0.",
+    "sources": [
+     "Parameters.java:12875"
+    ]
+   },
+   {
+    "id": "REL-9012.107-02",
+    "kind": "rewrite",
+    "severity": "medium",
+    "tags": [
+     "9012.107"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(107)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(107)=1"
+     }
+    ],
+    "title": "Config rewrites 107=1 to 0",
+    "explanation": "Rule '9012=107=0 :: tag9012(107)=1' disables composite mode 1.",
+    "sources": [
+     "ai.fixmsg.properties:180"
+    ]
+   }
+  ],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2434",
+   "FlexOrderStream.java:11476",
+   "OrderHolder.java:644"
+  ]
+ },
+ {
+  "id": "9012.108",
+  "number": "108",
+  "parent": "9012",
+  "alias": null,
+  "name": "Compound switch margin",
+  "category": "compound",
+  "description": "Percent (stored x0.01) hysteresis for switching back from state 1 to 0: return when diff < threshold[1]*(switchNumber - margin); also defines a margin limit price.",
+  "valueFormat": "percent",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "COMPOUND"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2430",
+   "CompoundAlgoTracker.java:296",
+   "CompoundAlgoTracker.java:356"
+  ]
+ },
+ {
+  "id": "9012.109",
+  "number": "109",
+  "parent": "9012",
+  "alias": null,
+  "name": "Scale step size",
+  "category": "limit-price",
+  "description": "SCALE: share size of each ladder step, passed to the ScaleAlgoTracker.",
+  "valueFormat": "shares",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "SCALE"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2406",
+   "Parameters.java:12248",
+   "Parameters.java:12884"
+  ]
+ },
+ {
+  "id": "9012.110",
+  "number": "110",
+  "parent": "9012",
+  "alias": null,
+  "name": "Halt volume mode",
+  "category": "monitoring",
+  "description": "When 0 (default) the quote stream is marked halted for the order during circuit-breaker halts and halt-when-out-of-range (59=3) states; non-zero leaves the quote stream untouched.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2438",
+   "FlexOrderStream.java:2056",
+   "FlexOrderStream.java:16356"
+  ]
+ },
+ {
+  "id": "9012.111",
+  "number": "111",
+  "parent": "9012",
+  "alias": null,
+  "name": "Anti-gaming venue type mode",
+  "category": "routing-venue",
+  "description": "Which venue types to avoid for anti-gaming: 0 = use config (antigame_algos / antigame_venue_type), 1 = avoid periodic-mid venues, 2 = avoid pmid or dark, 3 = avoid pmid, dark or posting venues, 4 = avoid all.",
+  "valueFormat": "0-4",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "config"
+   },
+   {
+    "value": "1",
+    "meaning": "pmid"
+   },
+   {
+    "value": "2",
+    "meaning": "pmid or dark"
+   },
+   {
+    "value": "3",
+    "meaning": "pmid, dark or post"
+   },
+   {
+    "value": "4",
+    "meaning": "all"
+   }
+  ],
+  "default": "0",
+  "example": {
+   "value": "2",
+   "explanation": "Avoid pmid and dark venues."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:2466",
+   "Parameters.java:15140",
+   "ExecutionCustomizer.java:558",
+   "oeo/ConcertStrategy.java:7473"
+  ]
+ },
+ {
+  "id": "9012.112",
+  "number": "112",
+  "parent": "9012",
+  "alias": null,
+  "name": "End time reject mode",
+  "category": "risk-control",
+  "description": "Controls rejecting/expiring the order after its end time: mode[,erb]. Mode <=1 also rejects unsent residual after the close; mode 1 measures to the (rolled) end stamp instead of the raw end; even modes reject EXPIRED after a buffer, odd modes reject SEND_ND_EXPIRED immediately; <= -100 disables the expiry reject. Second field (erb) is stored but not read elsewhere in this tree.",
+  "valueFormat": "mode[,erb]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "-1 (config sets 3 when absent); when this tag is absent: Config default 112=3 (ai.fixmsg.properties:425, ai.fixmsg.properties:266, ai.fixmsg.properties:270, AI-FIXMSG-CONFLICTS.md:68)",
+  "example": {
+   "value": "3",
+   "explanation": "Expire immediately after end time."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2442",
+   "FlexOrderStream.java:16827",
+   "FlexOrderStream.java:16855",
+   "ai.fixmsg.properties:425",
+   "ai.fixmsg.properties:266",
+   "ai.fixmsg.properties:270",
+   "AI-FIXMSG-CONFLICTS.md:68"
+  ]
+ },
+ {
+  "id": "9012.113",
+  "number": "113",
+  "parent": "9012",
+  "alias": null,
+  "name": "Regulator halt threshold",
+  "category": "risk-control",
+  "description": "threshold[,mode]: pause the order when the price has moved more than the threshold (spread-normalised bps vs benchmark) from the strike; mode <1 lets candidates ignore the halt. Default comes from config for regulator_halt_algos.",
+  "valueFormat": "threshold[,mode]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "-1 (config for some algos)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2450",
+   "CandidateRegulator.java:1421",
+   "CandidateRegulator.java:1494",
+   "CandidateRegulator.java:174",
+   "Parameters.java:15111"
+  ]
+ },
+ {
+  "id": "9012.114",
+  "number": "114",
+  "parent": "9012",
+  "alias": null,
+  "name": "Regulator halt min periods",
+  "category": "risk-control",
+  "description": "Minimum duration (in OEO monitor periods) for the regulator halt logic; <=0 uses config.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "config regulator_halt_nmin",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2458",
+   "CandidateRegulator.java:1457",
+   "Parameters.java:15121"
+  ]
+ },
+ {
+  "id": "9012.115",
+  "number": "115",
+  "parent": "9012",
+  "alias": null,
+  "name": "Regulator halt max periods",
+  "category": "risk-control",
+  "description": "Maximum duration (in OEO monitor periods) for the regulator halt logic; <=0 uses config.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "config regulator_halt_nmax",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2462",
+   "CandidateRegulator.java:1462",
+   "Parameters.java:15126"
+  ]
+ },
+ {
+  "id": "9012.116",
+  "number": "116",
+  "parent": "9012",
+  "alias": null,
+  "name": "Adjust by beta",
+  "category": "compound",
+  "description": ">0 weights cash/portfolio balancing by the stock's equity beta (eqyBeta) instead of 1.",
+  "valueFormat": "0|1",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "0",
+  "example": {
+   "value": "1",
+   "explanation": "Beta-adjusted balance."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2470",
+   "CandidateProcessor.java:595",
+   "OrderHolder.java:1458"
+  ]
+ },
+ {
+  "id": "9012.117",
+  "number": "117",
+  "parent": "9012",
+  "alias": null,
+  "name": "Historical volume mode",
+  "category": "schedule",
+  "description": "For LINE with index-tracker adaption (79) other than 3/4/7: >0 selects LINERELATIVE_HIST instead of LINERELATIVE as the impact child algo.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0; when this tag is absent: Config sets 117=1 for ARROWST (ai.fixmsg.properties:38)",
+  "example": null,
+  "appliesTo": [
+   "LINE"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:1901",
+   "Parameters.java:12341",
+   "ai.fixmsg.properties:38"
+  ]
+ },
+ {
+  "id": "9012.118",
+  "number": "118",
+  "parent": "9012",
+  "alias": null,
+  "name": "Index change volume mode",
+  "category": "auction-close",
+  "description": ">0 uses the index-change closing volume estimate (closingVolume(true)) for close sizing and caps.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:2474",
+   "CandidateRegulator.java:480",
+   "CandidateRegulator.java:1039",
+   "FlexOrderStream.java:1426"
+  ]
+ },
+ {
+  "id": "9012.119",
+  "number": "119",
+  "parent": "9012",
+  "alias": null,
+  "name": "Index change volume",
+  "category": "auction-close",
+  "description": "Index-change volume factor; in this tree it is only read by its accessor and printed in the parameter dump. Effect unknown.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "1",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": false,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:2478",
+   "Parameters.java:15258",
+   "Parameters.java:17507"
+  ]
+ }
+]

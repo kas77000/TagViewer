@@ -1,0 +1,4 @@
+[
+  {"object": "relationship", "id": "REL-G-9012-02", "severity": "info",
+   "_why": "General statement true for every order with 9012; the concrete overrides are reported per rule."}
+]

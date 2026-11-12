@@ -1,0 +1,4936 @@
+[
+ {
+  "id": "9012.1654",
+  "number": "1654",
+  "parent": "9012",
+  "alias": "PFEOD",
+  "name": "Prevent flip to EOD",
+  "category": "risk-control",
+  "description": "When > 0, the Concert strategy does not 'flip' the order into end-of-day (EOD) mode near the close: the EOD transition returns without setting the EOD flag. It also disables purestream EOD mode 1 (purestream_eod_mode() returns 0 when PFEOD>0).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "EOD flip allowed (default behaviour)"
+   },
+   {
+    "value": "1",
+    "meaning": "never flip to EOD mode"
+   }
+  ],
+  "default": "-1 (not set: EOD flip allowed)",
+  "example": {
+   "value": "1",
+   "explanation": "Order stays in its normal mode through the close instead of switching to EOD aggressive completion."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1654-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.1654",
+     "9012.393"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1654)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1654)>0"
+     },
+     {
+      "field": "tag9012(393)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(393)=1"
+     }
+    ],
+    "title": "PFEOD disables purestream EOD mode 1",
+    "explanation": "purestream_eod_mode() returns 0 when purestream EOD mode (tag 393) is 1 and PFEOD>0, so the purestream EOD behaviour is switched off.",
+    "sources": [
+     "Parameters.java:5928"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7728",
+   "Parameters.java:7731",
+   "oeo/ConcertStrategy.java:5752",
+   "Parameters.java:5928"
+  ]
+ },
+ {
+  "id": "9012.1655",
+  "number": "1655",
+  "parent": "9012",
+  "alias": "RPROF",
+  "name": "Reject invalid volume profile",
+  "category": "risk-control",
+  "description": "Controls what happens when the order's volume profile fails validation (profile.checkValid() returns an error). >0 enables handling; value 2 replaces a non-default invalid profile with the 'Default<profileGroup>' profile and recomputes. Other positive values follow the reject path in FlexOrderStream (the code after the mode-2 branch).",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "ignore invalid profile"
+   },
+   {
+    "value": "1",
+    "meaning": "act on invalid profile (reject path)"
+   },
+   {
+    "value": "2",
+    "meaning": "fall back to Default<profileGroup> profile when current profile is not already a default one"
+   }
+  ],
+  "default": "-1 -> OEOConfig reject_invalid_profile()",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1655-01",
+    "kind": "reject",
+    "severity": "medium",
+    "tags": [
+     "9012.1655"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1655)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1655)>0"
+     }
+    ],
+    "title": "Invalid volume profile may reject the order",
+    "explanation": "With RPROF>0 an invalid volume profile triggers error handling; mode 2 substitutes the default profile instead.",
+    "sources": [
+     "FlexOrderStream.java:2592"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:7736",
+   "Parameters.java:7739",
+   "FlexOrderStream.java:2592",
+   "FlexOrderStream.java:2593"
+  ]
+ },
+ {
+  "id": "9012.1656",
+  "number": "1656",
+  "parent": "9012",
+  "alias": "AALF",
+  "name": "Adjust volume-auction leave fill",
+  "category": "schedule",
+  "description": "Bitmask telling the volume-profile update to account for auction fills/leaves: bit 1 (1) = close (uses on-close leaves once past pre-close/continuous end), bit 2 (2) = opening auction fills, bit 4 (4) = PM opening auction fills. The resulting fractions are fed into profile.setVolumeFrac(moo, moopm, moc).",
+  "valueFormat": "int bitmask (1=close,2=open,4=PM open)",
+  "type": "int",
+  "allowedValues": [
+   {
+    "value": "1",
+    "meaning": "close"
+   },
+   {
+    "value": "2",
+    "meaning": "open"
+   },
+   {
+    "value": "4",
+    "meaning": "PM open"
+   },
+   {
+    "value": "7",
+    "meaning": "all"
+   }
+  ],
+  "default": "-1 -> AlgoConfig adjust_vauc_leavefill per algorithm (property default \"IIS 6 7\")",
+  "example": {
+   "value": "3",
+   "explanation": "Adjust profile for both open and close auction fills."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7745",
+   "Parameters.java:7748",
+   "AlgoConfig.java:3153",
+   "FlexOrderStream.java:2228",
+   "FlexOrderStream.java:2236",
+   "FlexOrderStream.java:2244",
+   "FlexOrderStream.java:2327"
+  ]
+ },
+ {
+  "id": "9012.1657",
+  "number": "1657",
+  "parent": "9012",
+  "alias": "AUNS",
+  "name": "Auction order split count",
+  "category": "auction-open",
+  "description": "Number of child orders an auction worker splits the auction quantity into (AuctionWorker nsplit). For the 'ia' worker, ia_nsplit overrides it, and it is raised if size exceeds max MOO/market order size; it is capped by max_simul_auction (MSAU).",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig auction_nsplit(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1657-01",
+    "kind": "override",
+    "severity": "low",
+    "tags": [
+     "9012.1657",
+     "9012.1721"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1657)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1657)!=null"
+     },
+     {
+      "field": "tag9012(1721)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1721)>0"
+     }
+    ],
+    "title": "AUNS capped by MSAU",
+    "explanation": "nsplit = min(max_simul_auction - live auction orders, nsplit); if <1 no auction order is sent.",
+    "sources": [
+     "oeo/AuctionWorker.java:925"
+    ]
+   },
+   {
+    "id": "REL-9012.1657-02",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1657"
+    ],
+    "algorithms": [
+     "SDMA",
+     "DMA",
+     "ICEDMA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1657)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1657)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "SDMA^DMA^ICEDMA",
+      "raw": "algorithm=SDMA^DMA^ICEDMA"
+     },
+     {
+      "field": "start_to_close",
+      "op": "<",
+      "value": "0",
+      "raw": "start_to_close<0"
+     }
+    ],
+    "title": "Config sets AUNS=1 with DLP conversion",
+    "explanation": "ai.fixmsg.properties writes 1=DLP^104=1^AUNS=1 for SDMA/DMA limit orders started after close-start when USEDLP=1/2.",
+    "sources": [
+     "ai.fixmsg.properties:494",
+     "ai.fixmsg.properties:557"
+    ]
+   },
+   {
+    "id": "REL-9012.1657-03",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1657"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1657)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1657)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "IN",
+      "raw": "compositeExchangeCode=IN"
+     }
+    ],
+    "title": "India default AUNS=2",
+    "explanation": "For India market orders without close VWAP, config sets AUNS=2 if not already set.",
+    "sources": [
+     "ai.fixmsg.properties:656"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7754",
+   "Parameters.java:7757",
+   "oeo/AuctionWorker.java:914",
+   "oeo/AuctionWorker.java:925"
+  ]
+ },
+ {
+  "id": "9012.1658",
+  "number": "1658",
+  "parent": "9012",
+  "alias": "DCEV",
+  "name": "Dark chase exclude venues",
+  "category": "dark",
+  "description": "Comma-separated list of venue ids to exclude when the dark (LC) worker chases/allocates to dark venues; allocations whose exchange id is in the list are filtered out.",
+  "valueFormat": "venue1,venue2,...",
+  "type": "list",
+  "allowedValues": [],
+  "default": "not set (no exclusions)",
+  "example": {
+   "value": "SIGMAX,CROSSF",
+   "explanation": "Do not chase into these dark venue ids."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7765",
+   "oeo/LCWorker.java:1572"
+  ]
+ },
+ {
+  "id": "9012.1659",
+  "number": "1659",
+  "parent": "9012",
+  "alias": "IMBOB",
+  "name": "Imbalance-open offset buffer",
+  "category": "auction-open",
+  "description": "Seconds before the open auction start at which the imbalance-open (imbo) worker starts working (start = max(start, openStart - buffer)); also applied to OpenWorker instances whose id contains 'imbo'. Input in seconds, stored in ms.",
+  "valueFormat": "seconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig imb_offset_buffer(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7781",
+   "oeo/ImbOpenWorker.java:46",
+   "oeo/OpenWorker.java:46",
+   "oeo/OpenWorker.java:52"
+  ]
+ },
+ {
+  "id": "9012.1660",
+  "number": "1660",
+  "parent": "9012",
+  "alias": "VTTBO",
+  "name": "Valid theoretical open price time before open",
+  "category": "auction-open",
+  "description": "Seconds before the opening auction (or limit cutoff) from which the indicative/theoretical open price is considered valid by the OpenWorker (_valid_theop_time is moved earlier by this amount). Input seconds, stored ms.",
+  "valueFormat": "seconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig valid_time_theop_before_auction (60000 ms)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7790",
+   "oeo/OpenWorker.java:73",
+   "AlgoConfig.java:3577"
+  ]
+ },
+ {
+  "id": "9012.1661",
+  "number": "1661",
+  "parent": "9012",
+  "alias": "VTTBP",
+  "name": "Valid theoretical open price time before PM open",
+  "category": "auction-open",
+  "description": "Same as VTTBO but for the afternoon (PM) opening auction: shifts the OpenWorker's valid theoretical-price time earlier by this many seconds.",
+  "valueFormat": "seconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig valid_time_theop_before_auction (60000 ms)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7799",
+   "oeo/OpenWorker.java:55",
+   "AlgoConfig.java:3577"
+  ]
+ },
+ {
+  "id": "9012.1662",
+  "number": "1662",
+  "parent": "9012",
+  "alias": "VTTBC",
+  "name": "Valid theoretical close price time before close",
+  "category": "auction-close",
+  "description": "Seconds before continuous end within which a DQTE/QClose market (zero-limit) auction order may be priced off the indicative auction price plus N ticks (dqte_market_order_theop_ntick, tag 1636 DMOTN). Before that window the market auction order is not generated.",
+  "valueFormat": "seconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig valid_time_theop_before_close (480000 ms)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1662-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1662",
+     "9012.1636"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1662)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1662)!=null"
+     },
+     {
+      "field": "tag9012(1636)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1636)>0"
+     }
+    ],
+    "title": "VTTBC only used with DMOTN",
+    "explanation": "The window is checked only when dqte_market_order_theop_ntick > 0 and the auction order has no limit price.",
+    "sources": [
+     "oeo/QCloseWorker.java:210"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7808",
+   "oeo/QCloseWorker.java:214",
+   "AlgoConfig.java:3578"
+  ]
+ },
+ {
+  "id": "9012.1663",
+  "number": "1663",
+  "parent": "9012",
+  "alias": "RMRAC",
+  "name": "Reset MOC rate after close",
+  "category": "auction-close",
+  "description": "When > 0 and the earliest closing auction is within closebuffer, the OPE EOD processing resets the MOC piece to min(available shares, MOC size from evclose - close shares) if nothing is yet on close (log: 'Reset MOC size for RVWAPRELATIVE'). The value is also referenced by config rules as the MOC rate for relative-VWAP orders.",
+  "valueFormat": "number (>0 enables)",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 (disabled)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1663-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1663",
+     "9012.287"
+    ],
+    "algorithms": [
+     "VWAP"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1663)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1663)!=null"
+     },
+     {
+      "field": "clientAlgorithm",
+      "op": "=",
+      "value": "VWAP",
+      "raw": "clientAlgorithm=VWAP"
+     },
+     {
+      "field": "caiid_str",
+      "op": "=",
+      "value": "RVWAPRELATIVE",
+      "raw": "caiid_str=RVWAPRELATIVE"
+     }
+    ],
+    "title": "RMRAC used in RVWAPRELATIVE config rule",
+    "explanation": "ai.fixmsg.properties:584 builds tag 287 using _param.tag9012(\"RMRAC\") for RVWAPRELATIVE VWAP orders.",
+    "sources": [
+     "ai.fixmsg.properties:584"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:7815",
+   "FlexOrderStream.java:16987",
+   "ai.fixmsg.properties:584"
+  ]
+ },
+ {
+  "id": "9012.1664",
+  "number": "1664",
+  "parent": "9012",
+  "alias": "LLCT",
+  "name": "Late LOC limit ticks",
+  "category": "auction-close",
+  "description": "Parsed into _lloc_limit_nticks (late limit-on-close limit in ticks) but the accessor lloc_limit_nticks() is not referenced anywhere in the engine source; no effect found.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:7824",
+   "Parameters.java:7827"
+  ]
+ },
+ {
+  "id": "9012.1665",
+  "number": "1665",
+  "parent": "9012",
+  "alias": "LLCF",
+  "name": "Late LOC limit factor",
+  "category": "auction-close",
+  "description": "Parsed into _lloc_limit_factor but lloc_limit_factor() is never read in the engine source; no effect found.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:7832",
+   "Parameters.java:7835"
+  ]
+ },
+ {
+  "id": "9012.1666",
+  "number": "1666",
+  "parent": "9012",
+  "alias": "LLCA",
+  "name": "Late LOC adjustment",
+  "category": "auction-close",
+  "description": "Seconds (stored ms) for a late limit-on-close adjustment. The accessor late_loc_adj() forces the value to -2 when the AlgoConfig late_loc_adj map for the stock's exQatt is < 1; the field is otherwise only printed in the parameter dump. No functional reader found.",
+  "valueFormat": "seconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1; AlgoConfig late_loc_adj map (default \"UQ 1 0\")",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:7840",
+   "Parameters.java:7843",
+   "Parameters.java:17708",
+   "AlgoConfig.java:3173"
+  ]
+ },
+ {
+  "id": "9012.1667",
+  "number": "1667",
+  "parent": "9012",
+  "alias": "CWOD",
+  "name": "Conditional with optional dark",
+  "category": "dark",
+  "description": "For SHADOW-type orders: if no dark pools are available/usable, CWOD>0 switches the order to use conditionals (IOIs) exclusively (sets ioi_mode=2) instead of rejecting with NO_DARKPOOL.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1667-01",
+    "kind": "rewrite",
+    "severity": "high",
+    "tags": [
+     "9012.1667",
+     "9012.57"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1667)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1667)>0"
+     },
+     {
+      "field": "npmid",
+      "op": "=",
+      "value": "0",
+      "raw": "npmid=0"
+     }
+    ],
+    "title": "No dark venues: CWOD switches to IOI-only mode",
+    "explanation": "When no usable dark venues are found, CWOD>0 sets ioi_mode (tag 57) to 2 = conditionals exclusively.",
+    "sources": [
+     "oeo/ConcertStrategy.java:903",
+     "oeo/ConcertStrategy.java:7434"
+    ]
+   },
+   {
+    "id": "REL-9012.1667-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.1667"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1667)",
+      "op": "=",
+      "value": "null^0",
+      "raw": "tag9012(1667)=null^0"
+     },
+     {
+      "field": "npmid",
+      "op": "=",
+      "value": "0",
+      "raw": "npmid=0"
+     }
+    ],
+    "title": "Without CWOD a shadow order with no dark venues is rejected",
+    "explanation": "When npmid==0 and CWOD is not set, the order is rejected with OrderErrorType.NO_DARKPOOL.",
+    "sources": [
+     "oeo/ConcertStrategy.java:7440"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7851",
+   "oeo/ConcertStrategy.java:903",
+   "oeo/ConcertStrategy.java:7434",
+   "oeo/ConcertStrategy.java:7440"
+  ]
+ },
+ {
+  "id": "9012.1668",
+  "number": "1668",
+  "parent": "9012",
+  "alias": "QCIR",
+  "name": "QClose intraday max rate",
+  "category": "auction-close",
+  "description": "max_rate[,scale_minutes[,scale_max]]. For non-IIS, non-scheduled algos the DQTE/QClose minimum participation rate is max_rate% (capped by maxPartLevel), scaled up linearly with time-to-close dt: scale = 1 + dt/(scale_minutes*60s)*(scale_max-1), capped at scale_max.",
+  "valueFormat": "max_rate[,sdt_minutes[,smax]]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "AlgoConfig qclose_intraday_max_rate=25, qclose_intraday_rate_sdt=5.0, qclose_intraday_rate_smax=4.0",
+  "example": {
+   "value": "20,5,3",
+   "explanation": "Base 20% close-rate, scaling to 3x when 5+ minutes to close."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [
+   {
+    "algorithms": [
+     "IIS"
+    ],
+    "behavior": "ignored (minpr=0)"
+   },
+   {
+    "algorithms": [
+     "scheduled algos"
+    ],
+    "behavior": "ignored; rate from available shares / volume"
+   }
+  ],
+  "interactions": [
+   {
+    "id": "REL-9012.1668-01",
+    "kind": "ineffective",
+    "severity": "low",
+    "tags": [
+     "9012.1668"
+    ],
+    "algorithms": [
+     "IIS"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1668)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1668)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "IIS",
+      "raw": "algorithm=IIS"
+     }
+    ],
+    "title": "QCIR ignored for IIS and scheduled algos",
+    "explanation": "minpr is 0 for IIS and computed from volume for scheduled algos; QCIR only used otherwise.",
+    "sources": [
+     "oeo/ConcertStrategy.java:2963"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7861",
+   "Parameters.java:7871",
+   "Parameters.java:7883",
+   "oeo/ConcertStrategy.java:2968",
+   "oeo/ConcertStrategy.java:2972",
+   "AlgoConfig.java:3057",
+   "AlgoConfig.java:3058",
+   "AlgoConfig.java:3059"
+  ]
+ },
+ {
+  "id": "9012.1669",
+  "number": "1669",
+  "parent": "9012",
+  "alias": "STQD",
+  "name": "Stop queue duration",
+  "category": "posting",
+  "description": "Seconds before order end at which the strategy stops queue (queue-position) child orders when in the money or STQOM set. -1 (or any value <= -1) means stop flag is set but queues keep being processed (comment: 'we want to continue processing queues for HK ssh'). Input seconds, stored ms.",
+  "valueFormat": "seconds (-1 = keep queues)",
+  "type": "int",
+  "allowedValues": [
+   {
+    "value": "-1",
+    "meaning": "never kill queue orders (HK short sell)"
+   }
+  ],
+  "default": "-10001 -> AlgoConfig stop_queue_duration (60000 ms)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1669-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.1669",
+     "9012.1602",
+     "9012.23",
+     "9012.312"
+    ],
+    "algorithms": [
+     "VWAP",
+     "TMX"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1669)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1669)!=null"
+     },
+     {
+      "field": "side",
+      "op": "=",
+      "value": "sellshort",
+      "raw": "side=sellshort"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "HK",
+      "raw": "compositeExchangeCode=HK"
+     },
+     {
+      "field": "exchangeCode",
+      "op": "=",
+      "value": "HK",
+      "raw": "exchangeCode=HK"
+     },
+     {
+      "field": "end_to_close",
+      "op": ">=",
+      "value": "0",
+      "raw": "end_to_close>=0"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "VWAP^TMX",
+      "raw": "algorithm=VWAP^TMX"
+     }
+    ],
+    "title": "HK short-sell config sets STQD=5",
+    "explanation": "Config writes STQD=5^SEB=0^23=0^312=3 for HK short sells (VWAP/TMX), STQD=-1 for other algos.",
+    "sources": [
+     "ai.fixmsg.properties:280",
+     "ai.fixmsg.properties:281"
+    ]
+   },
+   {
+    "id": "REL-9012.1669-02",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1669",
+     "9012.1727"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1669)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1669)!=null"
+     }
+    ],
+    "title": "STQD only acts when in-the-money or STQOM>0",
+    "explanation": "The stop-queue check runs only if the order is in the money or stop_queue_oom > 0.",
+    "sources": [
+     "oeo/ConcertStrategy.java:5272"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7891",
+   "Parameters.java:7894",
+   "oeo/ConcertStrategy.java:5276",
+   "oeo/ConcertStrategy.java:5285",
+   "oeo/ConcertStrategy.java:5286",
+   "AlgoConfig.java:3043"
+  ]
+ },
+ {
+  "id": "9012.1670",
+  "number": "1670",
+  "parent": "9012",
+  "alias": "UOIP",
+  "name": "Unified open imbalance pricing",
+  "category": "auction-open",
+  "description": "When > 0, the imbalance-open worker's goal limit uses the order's own limit price instead of the theoretical open price.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7900",
+   "oeo/ConcertStrategy.java:6454"
+  ]
+ },
+ {
+  "id": "9012.1671",
+  "number": "1671",
+  "parent": "9012",
+  "alias": "OIWT",
+  "name": "Open imbalance wait threshold",
+  "category": "auction-open",
+  "description": "Milliseconds: smart-open logic does nothing until the auction time (min of continuous begin and pre-open end) is within this threshold. Parsed as a raw integer (no seconds conversion).",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "0 (no wait)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7908",
+   "oeo/ConcertStrategy.java:6285"
+  ]
+ },
+ {
+  "id": "9012.1672",
+  "number": "1672",
+  "parent": "9012",
+  "alias": "DQPM",
+  "name": "DQTE price mode",
+  "category": "auction-close",
+  "description": "mode[,price_str]. 0 = follow client limit (NASDAQ uses DMOTN); 1 = use imbalance price as reference and follow DMOTN; 11-19 = compute a DQTE limit from the strike price using price_str, applied when the strike is set (12 also uses the client limit as benchmark when it is better than strike). price_str is an absolute price or a number with suffix B (bps), C (cents) or S (multiples of average spread).",
+  "valueFormat": "mode[,price_str]",
+  "type": "composite",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "client limit"
+   },
+   {
+    "value": "1",
+    "meaning": "imbalance price reference"
+   },
+   {
+    "value": "11-19",
+    "meaning": "strike-based DQTE price"
+   },
+   {
+    "value": "12",
+    "meaning": "strike-based, benchmark=client limit if better"
+   }
+  ],
+  "default": "0, price_str empty",
+  "example": {
+   "value": "11,10B",
+   "explanation": "Close auction limit no worse than 10 bps from the strike price."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1672-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.1672"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1672)",
+      "op": ">=",
+      "value": "11",
+      "raw": "tag9012(1672)>=11"
+     },
+     {
+      "field": "spread",
+      "op": "<=",
+      "value": "0",
+      "raw": "spread<=0"
+     }
+    ],
+    "title": "Spread-based DQTE price without average spread rejects",
+    "explanation": "With suffix S and no stock average spread the order is rejected with DQTE_NO_SPRD.",
+    "sources": [
+     "FlexOrderStream.java:3996",
+     "FlexOrderStream.java:4002"
+    ]
+   },
+   {
+    "id": "REL-9012.1672-02",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.1672"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1672)",
+      "op": ">",
+      "value": "10",
+      "raw": "tag9012(1672)>10"
+     }
+    ],
+    "title": "QClose auction orders wait for DQTE price",
+    "explanation": "With mode >10 the QClose worker will not create the auction order until a dqte_price has been computed.",
+    "sources": [
+     "oeo/QCloseWorker.java:167",
+     "oeo/QCloseWorker.java:172"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7914",
+   "Parameters.java:7922",
+   "FlexOrderStream.java:3964",
+   "FlexOrderStream.java:3982",
+   "FlexOrderStream.java:3996",
+   "FlexOrderStream.java:4075",
+   "oeo/QCloseWorker.java:167",
+   "oeo/QCloseWorker.java:183"
+  ]
+ },
+ {
+  "id": "9012.1673",
+  "number": "1673",
+  "parent": "9012",
+  "alias": "DQRM",
+  "name": "DQTE reduce mode",
+  "category": "auction-close",
+  "description": "mode[,min_lots[,chg_pct[,order_pct]]]. Sets the DQTE (close) worker's reduce mode; mode 2 also converts the order to QClose. In reduce mode 3 the auction worker refuses to reduce if the remaining change is smaller than min_lots round lots, chg_pct% of shares left, order_pct% of unfilled size, or theoretical volume change < chg_pct%. If not set (<0), reduce mode 1 is used.",
+  "valueFormat": "mode[,min_lots[,chg_pct[,order_pct]]]",
+  "type": "composite",
+  "allowedValues": [
+   {
+    "value": "1",
+    "meaning": "default reduce mode"
+   },
+   {
+    "value": "2",
+    "meaning": "no-cancel: converts order to QClose"
+   },
+   {
+    "value": "3",
+    "meaning": "reduce only on significant change"
+   }
+  ],
+  "default": "-1 (reduce mode 1); sub-values from AlgoConfig dqte_reduce_*",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1673-01",
+    "kind": "conversion",
+    "severity": "medium",
+    "tags": [
+     "9012.1673"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1673)",
+      "op": "=",
+      "value": "2",
+      "raw": "tag9012(1673)=2"
+     }
+    ],
+    "title": "DQRM=2 converts order to QClose",
+    "explanation": "Setting reduce mode 2 calls _sysorder.convertQClose().",
+    "sources": [
+     "oeo/ConcertStrategy.java:2844"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7941",
+   "Parameters.java:7954",
+   "oeo/ConcertStrategy.java:2842",
+   "oeo/ConcertStrategy.java:2844",
+   "oeo/AuctionWorker.java:612",
+   "oeo/AuctionWorker.java:616",
+   "oeo/AuctionWorker.java:620",
+   "oeo/AuctionWorker.java:626"
+  ]
+ },
+ {
+  "id": "9012.1674",
+  "number": "1674",
+  "parent": "9012",
+  "alias": "MTP",
+  "name": "Max take percent",
+  "category": "taking",
+  "description": "Caps aggressive taking to this percent of the order size: in TakeWorker, take size is restricted when (takes + net leaves + new size - grab takes - would takes) exceeds MTP% of order size. Grab and would takes are not counted.",
+  "valueFormat": "percent of order size",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "-1 (no cap)",
+  "example": {
+   "value": "30",
+   "explanation": "At most 30% of the order may be executed by take orders (excluding grab/would)."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7977",
+   "Parameters.java:7980",
+   "oeo/TakeWorker.java:115",
+   "oeo/TakeWorker.java:119"
+  ]
+ },
+ {
+  "id": "9012.1675",
+  "number": "1675",
+  "parent": "9012",
+  "alias": "ASCL",
+  "name": "Apply scheduler MOC limit",
+  "category": "auction-close",
+  "description": "When > 0, limits supplied by the external scheduler (eodlimit, moclimit, moclimit2, limit2, fairPt/fairPc/nearPc/dayRange/mocRange) are applied to the order; the MOC limit becomes the close auction limit candidate. When > 1, close (CLO/QCLO) work orders other than layer 0 and OPE EOD MOC sending wait until a scheduler MOC limit has been received.",
+  "valueFormat": "int (0/1/2)",
+  "type": "int",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "ignore scheduler limits"
+   },
+   {
+    "value": "1",
+    "meaning": "apply scheduler limits when available"
+   },
+   {
+    "value": "2",
+    "meaning": "apply and wait for scheduler MOC limit before sending close orders"
+   }
+  ],
+  "default": "-1 (not applied)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1675-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.1675"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1675)",
+      "op": ">",
+      "value": "1",
+      "raw": "tag9012(1675)>1"
+     }
+    ],
+    "title": "ASCL>1 holds MOC until scheduler limit arrives",
+    "explanation": "Close work orders (non layer 0) return -1 and processEOD sets opemoc=0 while SchedMocLimit is not set (when use_dqte<3 and moc_mode==0).",
+    "sources": [
+     "FlexOrderStream.java:10712",
+     "FlexOrderStream.java:17008",
+     "oeo/CloseWorker.java:225"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7985",
+   "FlexOrderStream.java:1559",
+   "FlexOrderStream.java:1567",
+   "FlexOrderStream.java:10712",
+   "FlexOrderStream.java:17008",
+   "oeo/CloseWorker.java:225",
+   "oeo/CloseWorker.java:229"
+  ]
+ },
+ {
+  "id": "9012.1676",
+  "number": "1676",
+  "parent": "9012",
+  "alias": "SLDC",
+  "name": "Skip legacy DQTE control",
+  "category": "auction-close",
+  "description": "When >= 1, skips the legacy rule that raises the QClose minimum participation rate to at least availshares/(theov+aimb+vres) (capped at 1); only the QCIR-derived rate is used.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 (legacy control applied)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1676-01",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.1676",
+     "9012.1668"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1676)",
+      "op": ">=",
+      "value": "1",
+      "raw": "tag9012(1676)>=1"
+     }
+    ],
+    "title": "SLDC changes how QCIR rate is floored",
+    "explanation": "With SLDC>=1 the QCIR rate is not floored by the available-shares/volume ratio.",
+    "sources": [
+     "oeo/ConcertStrategy.java:2974"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:7993",
+   "oeo/ConcertStrategy.java:2974"
+  ]
+ },
+ {
+  "id": "9012.1677",
+  "number": "1677",
+  "parent": "9012",
+  "alias": "TDBG",
+  "name": "OMS DB write target debug",
+  "category": "monitoring",
+  "description": "When = 1, scheduler-supplied limit targets (eodlimit, moclimit, moclimit2, limit2, fairPt, fairPc, nearPc, dayRange, mocRange) are also written to the OMS DB via addOMSTargetDebug. Debug/monitoring only.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 (off)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1677-01",
+    "kind": "requires",
+    "severity": "info",
+    "tags": [
+     "9012.1677",
+     "9012.1675"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1677)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(1677)=1"
+     },
+     {
+      "field": "tag9012(1675)",
+      "op": "<=",
+      "value": "0",
+      "raw": "tag9012(1675)<=0"
+     }
+    ],
+    "title": "TDBG requires ASCL>0",
+    "explanation": "The debug writes happen inside the branches gated by apply_scheduler_moclimit()>0.",
+    "sources": [
+     "FlexOrderStream.java:1559"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8001",
+   "FlexOrderStream.java:1562",
+   "FlexOrderStream.java:1599"
+  ]
+ },
+ {
+  "id": "9012.1678",
+  "number": "1678",
+  "parent": "9012",
+  "alias": "UUDC",
+  "name": "Use up to dark pool count",
+  "category": "dark",
+  "description": "If > 0, sets the dark (LC) worker's venue packer to use at most this many dark pools (VenuePacker.setUseMaxNum).",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 (packer default)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8009",
+   "oeo/LCWorker.java:79"
+  ]
+ },
+ {
+  "id": "9012.1679",
+  "number": "1679",
+  "parent": "9012",
+  "alias": "CGBW",
+  "name": "Count grab block as would",
+  "category": "would",
+  "description": "Flag stored with an AlgoConfig fallback (count_grab_block_as_would), but the accessor is not read anywhere else in the engine source; intended to count grab-block fills as would fills. No effect found.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig count_grab_block_as_would",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8017",
+   "Parameters.java:8020"
+  ]
+ },
+ {
+  "id": "9012.1680",
+  "number": "1680",
+  "parent": "9012",
+  "alias": "IOID",
+  "name": "IOI start time delay",
+  "category": "dark",
+  "description": "Delay after the order start before the IOI (conditional) worker begins acting. Accepts a number with optional unit suffix s/m/h (default seconds).",
+  "valueFormat": "N[s|m|h]",
+  "type": "time",
+  "allowedValues": [],
+  "default": "-1 (no delay)",
+  "example": {
+   "value": "5m",
+   "explanation": "Do not send conditionals during the first 5 minutes of the order."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8028",
+   "oeo/IoIWorker.java:736"
+  ]
+ },
+ {
+  "id": "9012.1681",
+  "number": "1681",
+  "parent": "9012",
+  "alias": "WPAL",
+  "name": "Would post add leave",
+  "category": "would",
+  "description": "When = 1 and the would percentage is 100, the would-post size includes the currently leaving lit would shares (leaveWouldLit).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig would_post_add_leave (default 1)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1681-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1681",
+     "9012.385"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1681)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1681)!=null"
+     },
+     {
+      "field": "tag9012(385)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(385)!=null"
+     }
+    ],
+    "title": "Config sets WPAL=0 when tag 385 is set",
+    "explanation": "ai.fixmsg.properties writes WPAL=0 if not set and 385 is present; also WPAL=0 for LINE.",
+    "sources": [
+     "ai.fixmsg.properties:459",
+     "ai.fixmsg.properties:560"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8047",
+   "Parameters.java:8050",
+   "AlgoConfig.java:3441",
+   "oeo/ConcertStrategy.java:1767"
+  ]
+ },
+ {
+  "id": "9012.1682",
+  "number": "1682",
+  "parent": "9012",
+  "alias": "ITSL",
+  "name": "Index tracking strictness level",
+  "category": "risk-control",
+  "description": "What to block when the index tracker halts the order (out of line): 1 = block auction work orders; 2 = block all work orders; 3 = block auction orders only when the halt is on the favorable side (CloseWorker stops sending more).",
+  "valueFormat": "int (0-3)",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "no blocking"
+   },
+   {
+    "value": "1",
+    "meaning": "do not send auction orders when halted"
+   },
+   {
+    "value": "2",
+    "meaning": "do not send any orders when halted"
+   },
+   {
+    "value": "3",
+    "meaning": "block auction orders when halted on favorable side"
+   }
+  ],
+  "default": "-1 -> AlgoConfig index_tracking_strictness_level",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1682-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1682",
+     "9012.55"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1682)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1682)>0"
+     },
+     {
+      "field": "tag9012(55)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(55)!=null"
+     }
+    ],
+    "title": "ITSL needs an index tracker",
+    "explanation": "Blocking only happens when orderInfo().shouldHalt(INDEXTRACKER) is true, i.e. an index tracker (tag 55) is configured.",
+    "sources": [
+     "FlexOrderStream.java:10646"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8057",
+   "Parameters.java:8061",
+   "FlexOrderStream.java:10645",
+   "oeo/CloseWorker.java:167",
+   "oeo/DualCloseWorker.java:481"
+  ]
+ },
+ {
+  "id": "9012.1683",
+  "number": "1683",
+  "parent": "9012",
+  "alias": "PPQL",
+  "name": "Passive pricing from quote and last price",
+  "category": "posting",
+  "description": "When > 0, passive (post) prices are computed with Statics.calculate_passive_price_quote_lastprice (from quote and last price) and the work order price is adjusted to that, limited by the order limit; applied in PostWorker, LCWorker and on final price check.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 (off)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8069",
+   "FlexOrderStream.java:10869",
+   "oeo/LCWorker.java:1073",
+   "oeo/PostWorker.java:746"
+  ]
+ },
+ {
+  "id": "9012.1684",
+  "number": "1684",
+  "parent": "9012",
+  "alias": "QCBM",
+  "name": "QClose worker begin mode",
+  "category": "auction-close",
+  "description": "1 = the QClose/DQTE logic does not start until the DQTE pre-close begin time (DQPC); 0 = default.",
+  "valueFormat": "int (0/1)",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "default"
+   },
+   {
+    "value": "1",
+    "meaning": "do not start until DQPC begin time"
+   }
+  ],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8076",
+   "oeo/ConcertStrategy.java:2701",
+   "oeo/AuctionWorker.java:880"
+  ]
+ },
+ {
+  "id": "9012.1685",
+  "number": "1685",
+  "parent": "9012",
+  "alias": "EODBN",
+  "name": "EOD venue buffer min",
+  "category": "auction-close",
+  "description": "Minimum time buffer (ms) before continuous end used for EOD set-up: the EOD cutoff buffer is max(EODBN, min(EODBX, cycle delay)); also used for cancel-before-close handling. Overridden by the must-EOD lead time from tag 192 if set.",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig eod_venue_buffer_min (5000)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1685-01",
+    "kind": "override",
+    "severity": "low",
+    "tags": [
+     "9012.1685",
+     "9012.192"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1685)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1685)!=null"
+     },
+     {
+      "field": "tag9012(192)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(192)!=null"
+     }
+    ],
+    "title": "Must-EOD lead time beats EODBN",
+    "explanation": "eod_venue_buffer_min() returns _must_eod_lead_time (from tag 192 second field) when > 0.",
+    "sources": [
+     "Parameters.java:8089",
+     "Parameters.java:2887"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8085",
+   "Parameters.java:8089",
+   "AlgoConfig.java:2511",
+   "oeo/ConcertStrategy.java:5735",
+   "oeo/NDMAStrategy.java:1263",
+   "FlexOrderStream.java:17891"
+  ]
+ },
+ {
+  "id": "9012.1686",
+  "number": "1686",
+  "parent": "9012",
+  "alias": "EODBX",
+  "name": "EOD venue buffer max",
+  "category": "auction-close",
+  "description": "Maximum buffer (ms) before continuous end at which EOD handling starts: EOD set-up task scheduled at continuousEnd - EODBX, DMA/NDMA strategies enter EOD, candidate processing, relay scheduler and US EOD amendment window use it.",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig eod_venue_buffer_max (20000)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8097",
+   "AlgoConfig.java:2512",
+   "oeo/ConcertStrategy.java:5728",
+   "oeo/DMAStrategy.java:710",
+   "oeo/NDMAStrategy.java:1139",
+   "CandidateProcessor.java:2045",
+   "RelayScheduler.java:858",
+   "FlexOrderStream.java:16949"
+  ]
+ },
+ {
+  "id": "9012.1687",
+  "number": "1687",
+  "parent": "9012",
+  "alias": "RDWS",
+  "name": "Represent dark within spread",
+  "category": "dark",
+  "description": "When > 0, the post/pmid balancing that ensures both dark (pmid) and post representation is also applied when the order is in-spread (not just at mid).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 (off)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:8108",
+   "oeo/ConcertStrategy.java:3840"
+  ]
+ },
+ {
+  "id": "9012.1688",
+  "number": "1688",
+  "parent": "9012",
+  "alias": "WXM",
+  "name": "Self-cross work order mode",
+  "category": "risk-control",
+  "description": "mode[,identifier]. Work-order-level self-cross prevention: 0 = no restriction; 1 = debug mode; 2 = no work-order self-cross, no priority; 3 = no self-cross, take orders have priority (cancels existing non-take orders). Identifier replaces clientID/basket as the self-cross grouping id. Mode >=1 also disables multi-order transmission.",
+  "valueFormat": "mode[,identifier]",
+  "type": "composite",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "no restriction"
+   },
+   {
+    "value": "1",
+    "meaning": "debug"
+   },
+   {
+    "value": "2",
+    "meaning": "prevent self-cross, no priority"
+   },
+   {
+    "value": "3",
+    "meaning": "prevent self-cross, take orders have priority"
+   }
+  ],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1688-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.1688",
+     "9012.15",
+     "9012.112"
+    ],
+    "algorithms": [
+     "LINE"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1688)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1688)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "LINE",
+      "raw": "algorithm=LINE"
+     }
+    ],
+    "title": "WXM on LINE sets 15=0 and 112=2",
+    "explanation": "ai.fixmsg.properties writes 15=0^112=2 when WXM is set on LINE orders.",
+    "sources": [
+     "ai.fixmsg.properties:397"
+    ]
+   },
+   {
+    "id": "REL-9012.1688-02",
+    "kind": "side_effect",
+    "severity": "low",
+    "tags": [
+     "9012.1688"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1688)",
+      "op": ">=",
+      "value": "1",
+      "raw": "tag9012(1688)>=1"
+     }
+    ],
+    "title": "WXM disables multi-order transmission",
+    "explanation": "transmitmulti requires selfcross_workorder_mode < 1.",
+    "sources": [
+     "FlexOrderStream.java:16576"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8118",
+   "Parameters.java:8123",
+   "FlexOrderStream.java:9109",
+   "FlexOrderStream.java:9123",
+   "FlexOrderStream.java:16576"
+  ]
+ },
+ {
+  "id": "9012.1689",
+  "number": "1689",
+  "parent": "9012",
+  "alias": "ITMM",
+  "name": "Index tracking MOC margin",
+  "category": "limit-price",
+  "description": "Margin passed to IndexTracker.safePrice for close/auction (non-day) orders when deriving a safe limit from the index-tracking reference price (MOC, dual close, QClose, auction workers).",
+  "valueFormat": "number (margin units of IndexTracker.safePrice)",
+  "type": "float",
+  "allowedValues": [],
+  "default": "AlgoConfig indextracking_moc_margin (default 20)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1689-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1689",
+     "9012.55"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1689)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1689)!=null"
+     },
+     {
+      "field": "tag9012(55)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(55)=null"
+     }
+    ],
+    "title": "ITMM needs an index tracker",
+    "explanation": "Only used when an IndexTracker is configured for the order.",
+    "sources": [
+     "FlexOrderStream.java:7348"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8140",
+   "AlgoConfig.java:2889",
+   "FlexOrderStream.java:7352",
+   "FlexOrderStream.java:10631",
+   "oeo/QCloseWorker.java:190",
+   "oeo/AuctionWorker.java:525"
+  ]
+ },
+ {
+  "id": "9012.1690",
+  "number": "1690",
+  "parent": "9012",
+  "alias": "ITDM",
+  "name": "Index tracking day margin",
+  "category": "limit-price",
+  "description": "Margin passed to IndexTracker.safePrice for day (continuous) work orders and IOI orders when an index tracker is active.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "AlgoConfig indextracking_day_margin (default 0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8151",
+   "AlgoConfig.java:2890",
+   "FlexOrderStream.java:10631",
+   "oeo/IoIWorker.java:449"
+  ]
+ },
+ {
+  "id": "9012.1691",
+  "number": "1691",
+  "parent": "9012",
+  "alias": "T26DS",
+  "name": "Tag 26 deduct scheduler size",
+  "category": "auction-close",
+  "description": "When on and a MOC rate (tag 26) is set, the on-close quantity is deducted from the scheduler size and volume fractions use the no-close profile (v12nc/t12nc) when close is not scheduler-driven. Returns false whenever moc_rate()<=0.",
+  "valueFormat": "int (0/1)",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "-1 -> moc_rate()>0 && AlgoConfig tag26_deduct_scheduler_size",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1691-01",
+    "kind": "requires",
+    "severity": "medium",
+    "tags": [
+     "9012.1691",
+     "9012.26"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1691)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1691)!=null"
+     },
+     {
+      "field": "tag9012(26)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(26)=null"
+     }
+    ],
+    "title": "T26DS has no effect without tag 26",
+    "explanation": "tag26_deduct_scheduler_size() returns moc_rate()>0 && flag.",
+    "sources": [
+     "Parameters.java:8169"
+    ]
+   },
+   {
+    "id": "REL-9012.1691-02",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1691",
+     "9012.26",
+     "9012.27"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1691)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1691)!=null"
+     },
+     {
+      "field": "tag9012(1866)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(1866)=1"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "C1^C2^CH",
+      "raw": "compositeExchangeCode=C1^C2^CH"
+     }
+    ],
+    "title": "China PERD rule sets T26DS=1",
+    "explanation": "Config writes 26=5^27=1^T26DS=1 for China when PERD=1 and 26 is unset.",
+    "sources": [
+     "ai.fixmsg.properties:576"
+    ]
+   },
+   {
+    "id": "REL-9012.1691-03",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1691"
+    ],
+    "algorithms": [
+     "VWAP",
+     "TMX"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1691)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1691)!=null"
+     },
+     {
+      "field": "caiid_str",
+      "op": "=",
+      "value": "RVWAPRELATIVE^RTMXRELATIVE",
+      "raw": "caiid_str=RVWAPRELATIVE^RTMXRELATIVE"
+     }
+    ],
+    "title": "RVWAP/RTMX relative rules set T26DS=0",
+    "explanation": "Config sets 88=VWAP/TMX^T26DS=0^RPIO=1 for relative VWAP/TMX.",
+    "sources": [
+     "ai.fixmsg.properties:583",
+     "ai.fixmsg.properties:628"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8162",
+   "Parameters.java:8165",
+   "CandidateRegulator.java:799",
+   "FlexOrderStream.java:2677",
+   "OrderHolder.java:1862"
+  ]
+ },
+ {
+  "id": "9012.1692",
+  "number": "1692",
+  "parent": "9012",
+  "alias": "VCF",
+  "name": "Venue cost factor",
+  "category": "routing-venue",
+  "description": "Venue cost weighting factor (float). Parameters exposes venue_cost_factor() with AlgoConfig fallback, but no reader of this accessor exists in the engine source.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig venue_cost_factor (default 0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8173",
+   "AlgoConfig.java:2752"
+  ]
+ },
+ {
+  "id": "9012.1693",
+  "number": "1693",
+  "parent": "9012",
+  "alias": "VQF",
+  "name": "Venue quality factor",
+  "category": "routing-venue",
+  "description": "Venue quality weighting factor (float); accessor has AlgoConfig fallback but is not read elsewhere in the engine source.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig venue_quality_factor (default 0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8184",
+   "AlgoConfig.java:2753"
+  ]
+ },
+ {
+  "id": "9012.1694",
+  "number": "1694",
+  "parent": "9012",
+  "alias": "VQC",
+  "name": "Venue quality choice",
+  "category": "routing-venue",
+  "description": "Venue quality choice parameter (float); accessor has AlgoConfig fallback but is not read elsewhere in the engine source.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig venue_quality_choice (default 1.0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8195",
+   "AlgoConfig.java:2754"
+  ]
+ },
+ {
+  "id": "9012.1695",
+  "number": "1695",
+  "parent": "9012",
+  "alias": "PCF",
+  "name": "Post cost factor",
+  "category": "posting",
+  "description": "Posting cost factor (float); accessor has AlgoConfig fallback but is not read elsewhere in the engine source.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig post_cost_factor (default 0.5)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8206",
+   "AlgoConfig.java:2773"
+  ]
+ },
+ {
+  "id": "9012.1696",
+  "number": "1696",
+  "parent": "9012",
+  "alias": "PFF",
+  "name": "Post fill-rate factor",
+  "category": "posting",
+  "description": "Posting fill-rate factor (float); accessor has AlgoConfig fallback but is not read elsewhere in the engine source.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig post_frate_factor (default 0.5)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8217",
+   "AlgoConfig.java:2774"
+  ]
+ },
+ {
+  "id": "9012.1697",
+  "number": "1697",
+  "parent": "9012",
+  "alias": "ATUQ",
+  "name": "Allow trading on unverified quote",
+  "category": "risk-control",
+  "description": "When the quote is not 'latest' (stale/unverified), the final price check normally blocks the child order; ATUQ=3 always allows it, other values are passed as a mode to quote.isLatest(true, mode) which may accept the quote.",
+  "valueFormat": "int mode",
+  "type": "int",
+  "allowedValues": [
+   {
+    "value": "3",
+    "meaning": "always allow trading on unverified quote"
+   }
+  ],
+  "default": "-1",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:8229",
+   "FlexOrderStream.java:11628",
+   "FlexOrderStream.java:11640"
+  ]
+ },
+ {
+  "id": "9012.1698",
+  "number": "1698",
+  "parent": "9012",
+  "alias": "PEODP",
+  "name": "Post EOD price buffer",
+  "category": "posting",
+  "description": "Milliseconds before continuous end within which posting (POST-level) orders are priced with the EOD price (Statics.eodPrice / computeEODPrice) instead of normal passive pricing.",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig post_eod_price_buffer per algorithm",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8238",
+   "Parameters.java:8241",
+   "oeo/PostWorker.java:660",
+   "FlexOrderStream.java:11719",
+   "oeo/TakeWorker.java:827"
+  ]
+ },
+ {
+  "id": "9012.1699",
+  "number": "1699",
+  "parent": "9012",
+  "alias": "DLITO",
+  "name": "Dark/lit index tracker overwrite",
+  "category": "monitoring",
+  "description": "When > 0, enables exporting dark/lit limit prices (overwritten by index tracker) to the BBox export (exportDarkLitLimitToBbox); when <= 0 the export is skipped.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig dark_lit_idx_tracker_overwrite",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:8249",
+   "FlexOrderStream.java:19950",
+   "FlexOrderStream.java:19958"
+  ]
+ },
+ {
+  "id": "9012.1700",
+  "number": "1700",
+  "parent": "9012",
+  "alias": "SPBC",
+  "name": "Stop post before close",
+  "category": "posting",
+  "description": "Controls stopping passive posts before close together with SPB (postpool_zero_before_close, tag 1616): >0 stops posts SPB before continuous end even if the order is not mustComplete and cannot take; value 1 lets posts resume when the order cannot take, value 2 keeps them stopped.",
+  "valueFormat": "int (0/1/2)",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "1",
+    "meaning": "stop posts before close; may resume if cannot take"
+   },
+   {
+    "value": "2",
+    "meaning": "stop posts before close; do not resume"
+   }
+  ],
+  "default": "-1 (off)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1700-01",
+    "kind": "requires",
+    "severity": "medium",
+    "tags": [
+     "9012.1700",
+     "9012.1616"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1700)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1700)>0"
+     },
+     {
+      "field": "tag9012(1616)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(1616)=null"
+     }
+    ],
+    "title": "SPBC requires SPB",
+    "explanation": "Post stopping is gated by postpool_zero_before_close() > 0.",
+    "sources": [
+     "oeo/ConcertStrategy.java:5319"
+    ]
+   },
+   {
+    "id": "REL-9012.1700-02",
+    "kind": "rewrite",
+    "severity": "medium",
+    "tags": [
+     "9012.1700",
+     "9012.1616"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1700)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1700)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "HK^C1^C2^CH",
+      "raw": "compositeExchangeCode=HK^C1^C2^CH"
+     }
+    ],
+    "title": "Config sets SPBC=1^SPB=5 for HK/China, later rewritten to SPBC=2",
+    "explanation": "L393/L396 set SPBC=1^SPB=5; L615 then rewrites SPBC=1 to 2 (conflict C-14), so 1 is never final there.",
+    "sources": [
+     "ai.fixmsg.properties:393",
+     "ai.fixmsg.properties:396",
+     "ai.fixmsg.properties:615",
+     "AI-FIXMSG-CONFLICTS.md:64"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8259",
+   "oeo/ConcertStrategy.java:5320",
+   "oeo/ConcertStrategy.java:5321",
+   "oeo/ConcertStrategy.java:5327"
+  ]
+ },
+ {
+  "id": "9012.1701",
+  "number": "1701",
+  "parent": "9012",
+  "alias": "RPIO",
+  "name": "RVWAP ignore order target",
+  "category": "schedule",
+  "description": "When > 0, the participation-tracking ratio in the candidate regulator uses the full order size instead of the scheduler size as target (relative VWAP).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig rvwap_ignore_otd",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1701-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1701"
+    ],
+    "algorithms": [
+     "VWAP",
+     "TMX"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1701)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1701)!=null"
+     },
+     {
+      "field": "caiid_str",
+      "op": "=",
+      "value": "RVWAPRELATIVE^RTMXRELATIVE",
+      "raw": "caiid_str=RVWAPRELATIVE^RTMXRELATIVE"
+     }
+    ],
+    "title": "Set to 1 by relative VWAP/TMX rules",
+    "explanation": "Config writes RPIO=1 for RVWAPRELATIVE / RTMXRELATIVE.",
+    "sources": [
+     "ai.fixmsg.properties:583",
+     "ai.fixmsg.properties:628"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8266",
+   "CandidateRegulator.java:788"
+  ]
+ },
+ {
+  "id": "9012.1702",
+  "number": "1702",
+  "parent": "9012",
+  "alias": "IHAF",
+  "name": "Imbalance volume historical adjustment factor",
+  "category": "auction-close",
+  "description": "Weight of historical MOC size vs imbalance-based MOC size when estimating close size: est = imb_size + IHAF*(hist_size - imb_size).",
+  "valueFormat": "factor 0..1",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig imbv_hist_adj_factor",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8277",
+   "oeo/ConcertStrategy.java:2773"
+  ]
+ },
+ {
+  "id": "9012.1703",
+  "number": "1703",
+  "parent": "9012",
+  "alias": "STC",
+  "name": "Strict take check",
+  "category": "taking",
+  "description": "Extra take check against limitLowHigh: 1 = do not take if ask > limit (buy) or bid < limit (sell); 2 = also block when equal (>= / <=).",
+  "valueFormat": "int (0/1/2)",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "0",
+    "meaning": "off"
+   },
+   {
+    "value": "1",
+    "meaning": "strict (exclusive)"
+   },
+   {
+    "value": "2",
+    "meaning": "strict (inclusive)"
+   }
+  ],
+  "default": "-1 -> AlgoConfig strict_take_check",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8288",
+   "oeo/ABSStrategy.java:1445",
+   "oeo/ABSStrategy.java:1458"
+  ]
+ },
+ {
+  "id": "9012.1704",
+  "number": "1704",
+  "parent": "9012",
+  "alias": "LUOEX",
+  "name": "Leave use OEX",
+  "category": "other",
+  "description": "Boolean flag (>0) exposed as leave_use_oex() with AlgoConfig fallback (default 1 for the flexapiom trading source, else 0), but the accessor is not read elsewhere in the engine source.",
+  "valueFormat": "int (0/1)",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig leave_use_oex (1 if tradingsource=flexapiom else 0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8299",
+   "Parameters.java:8302",
+   "AlgoConfig.java:3571",
+   "AlgoConfig.java:3574"
+  ]
+ },
+ {
+  "id": "9012.1705",
+  "number": "1705",
+  "parent": "9012",
+  "alias": "RTFM",
+  "name": "Reject on take failure (market)",
+  "category": "reject",
+  "description": "When > 0, the parent order is rejected (OrderErrorType.TAKEFAILURE) once take child orders have failed or been rejected too many times on a venue.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig reject_take_failure_market(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1705-01",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.1705"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1705)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1705)>0"
+     }
+    ],
+    "title": "Repeated take failures reject the order",
+    "explanation": "After takeRetriedTooMany on a venue, RTFM>0 calls rejectOrderAndNotify(TAKEFAILURE).",
+    "sources": [
+     "FlexOrderStream.java:12241",
+     "FlexOrderStream.java:12310"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8310",
+   "Parameters.java:8313",
+   "FlexOrderStream.java:12241",
+   "FlexOrderStream.java:12310"
+  ]
+ },
+ {
+  "id": "9012.1707",
+  "number": "1707",
+  "parent": "9012",
+  "alias": "CLOSETRIG",
+  "name": "Close trigger value",
+  "category": "auction-close",
+  "description": "Enables DQTE/QClose close handling even without DQTE market hours: when > 0 the regular market hours are used with the pre-close window from DQPC (tag 1542); 2 = NYSE RVWAP DQTE size at least one round lot (non-Nasdaq); 3 = always rebuild hours from DQPC and enables US EOD amendment like doClose. Also enables index-tracker based close limit (with ITACL) and IOI index tracking.",
+  "valueFormat": "int (0-3)",
+  "type": "enum",
+  "allowedValues": [
+   {
+    "value": "1",
+    "meaning": "use regular hours + DQPC window for close"
+   },
+   {
+    "value": "2",
+    "meaning": "as 1, and DQTE size >= 1 round lot for non-Nasdaq"
+   },
+   {
+    "value": "3",
+    "meaning": "always rebuild DQTE hours from DQPC; triggers US EOD amend"
+   }
+  ],
+  "default": "not set (0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1707-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.1707",
+     "9012.1542"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1707)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1707)>0"
+     },
+     {
+      "field": "tag9012(1542)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1542)!=null"
+     }
+    ],
+    "title": "CLOSETRIG uses DQPC to define pre-close window",
+    "explanation": "With CLOSETRIG>0 and DQPC set, the DQTE pre-close period is rebuilt from continuousEnd minus DQPC values.",
+    "sources": [
+     "oeo/QCloseWorker.java:26",
+     "oeo/ConcertStrategy.java:2813"
+    ]
+   },
+   {
+    "id": "REL-9012.1707-02",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1707",
+     "9012.1709"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1707)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1707)>0"
+     },
+     {
+      "field": "tag9012(1709)",
+      "op": "=",
+      "value": "1^2",
+      "raw": "tag9012(1709)=1^2"
+     }
+    ],
+    "title": "CLOSETRIG + ITACL apply index tracker close limit",
+    "explanation": "In QClose, the index-tracker target price is applied only when close_trigger_value>0 (ITACL 1 = use target, 2 = safer of the two).",
+    "sources": [
+     "oeo/QCloseWorker.java:231"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8332",
+   "oeo/ConcertStrategy.java:2813",
+   "oeo/ConcertStrategy.java:3054",
+   "oeo/QCloseWorker.java:26",
+   "oeo/QCloseWorker.java:231",
+   "oeo/IoIWorker.java:807",
+   "FlexOrderStream.java:16947"
+  ]
+ },
+ {
+  "id": "9012.1708",
+  "number": "1708",
+  "parent": "9012",
+  "alias": "SHAC",
+  "name": "Self-cross handle after close",
+  "category": "risk-control",
+  "description": "When > 0, work-order self-cross checking (WXM) stays active until 5 minutes after continuous end instead of stopping 2 seconds before it.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig selfcross_handle_after_close",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1708-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1708",
+     "9012.1688"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1708)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1708)>0"
+     },
+     {
+      "field": "tag9012(1688)",
+      "op": "=",
+      "value": "null^0",
+      "raw": "tag9012(1688)=null^0"
+     }
+    ],
+    "title": "SHAC needs WXM>=1",
+    "explanation": "Self-cross logic returns early when selfcross_workorder_mode < 1.",
+    "sources": [
+     "FlexOrderStream.java:9112"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8340",
+   "FlexOrderStream.java:9117",
+   "FlexOrderStream.java:9120"
+  ]
+ },
+ {
+  "id": "9012.1709",
+  "number": "1709",
+  "parent": "9012",
+  "alias": "ITACL",
+  "name": "Index track apply close limit",
+  "category": "limit-price",
+  "description": "Whether the index-tracker safe price (with ITMM margin) is applied as limit for close auction orders: >0 applies it to MOC/dual MOC prices; in QClose with CLOSETRIG, 1 = use the tracker target as the limit, 2 = use the safer of DQTE limit and tracker target. In AuctionWorker, <1 vs >0 selects how market auction orders are limited.",
+  "valueFormat": "int (0/1/2)",
+  "type": "enum",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig indextrack_apply_close_limit(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1709-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1709",
+     "9012.55"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1709)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1709)>0"
+     },
+     {
+      "field": "tag9012(55)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(55)=null"
+     }
+    ],
+    "title": "ITACL needs an index tracker",
+    "explanation": "checkIndexTrackerMOCPrice only acts when an IndexTracker exists and tracks.",
+    "sources": [
+     "FlexOrderStream.java:7350"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8352",
+   "Parameters.java:8355",
+   "FlexOrderStream.java:7351",
+   "FlexOrderStream.java:7393",
+   "oeo/QCloseWorker.java:233",
+   "oeo/AuctionWorker.java:522",
+   "oeo/AuctionWorker.java:530"
+  ]
+ },
+ {
+  "id": "9012.1710",
+  "number": "1710",
+  "parent": "9012",
+  "alias": "TISLA",
+  "name": "Take iceberg size limit (avg N-minute volume)",
+  "category": "taking",
+  "description": "If > 0, take work orders smaller than the average N-minute volume (N = this value) are not turned into icebergs; only larger ones get iceberg display sizing.",
+  "valueFormat": "minutes (float)",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig take_iceberg_size_limit_avgnm(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8363",
+   "oeo/TakeWorker.java:537"
+  ]
+ },
+ {
+  "id": "9012.1711",
+  "number": "1711",
+  "parent": "9012",
+  "alias": "SUCLB",
+  "name": "Step-up MOC lead buffer",
+  "category": "auction-close",
+  "description": "Milliseconds before the latest close auction within which a step-up MOC order may be sent (0 = no lead restriction).",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig stepup_moc_lead_buffer (10000)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8374",
+   "AlgoConfig.java:3662",
+   "FlexOrderStream.java:17232"
+  ]
+ },
+ {
+  "id": "9012.1712",
+  "number": "1712",
+  "parent": "9012",
+  "alias": "SLCR",
+  "name": "Skip limit-close range",
+  "category": "auction-close",
+  "description": "When > 0, the MOC limit fraction (LCR, tag 1529 moc_limit_fraction) is set to 0 for close orders when a tick-price candidate is provided / skiplcr is requested, i.e. the close limit range is skipped.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set (0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1712-01",
+    "kind": "override",
+    "severity": "low",
+    "tags": [
+     "9012.1712",
+     "9012.1529"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1712)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1712)>0"
+     },
+     {
+      "field": "tag9012(1529)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1529)!=null"
+     }
+    ],
+    "title": "SLCR zeroes LCR",
+    "explanation": "With SLCR the moc_limit_fraction used for close pricing becomes 0 when skiplcr/tickprice applies.",
+    "sources": [
+     "FlexOrderStream.java:11390",
+     "oeo/AuctionWorker.java:228"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:8385",
+   "FlexOrderStream.java:11390",
+   "oeo/AuctionWorker.java:228"
+  ]
+ },
+ {
+  "id": "9012.1713",
+  "number": "1713",
+  "parent": "9012",
+  "alias": "MCPV",
+  "name": "Max MOC percent of volume",
+  "category": "auction-close",
+  "description": "Caps MOC order size to this fraction of the expected mean close volume (cap = MCPV * meanclose); also caps the OPE scheduler expected close.",
+  "valueFormat": "fraction (e.g. 0.6)",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig max_moc_pctvol (0.6)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8393",
+   "AlgoConfig.java:1759",
+   "FlexOrderStream.java:10426",
+   "OPEScheduler.java:197",
+   "oeo/CloseWorker.java:146"
+  ]
+ },
+ {
+  "id": "9012.1714",
+  "number": "1714",
+  "parent": "9012",
+  "alias": "VFFC",
+  "name": "ADVIT from first candidate time",
+  "category": "schedule",
+  "description": "Parsed into _advit_from_first_candidate_time but the accessor is never read in the engine source; no effect found.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8404",
+   "Parameters.java:8407"
+  ]
+ },
+ {
+  "id": "9012.1715",
+  "number": "1715",
+  "parent": "9012",
+  "alias": "UUIC",
+  "name": "Use up to IOI count",
+  "category": "dark",
+  "description": "If > 0, the IOI worker's venue packer uses at most this many IOI/conditional venues.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set (packer default)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8412",
+   "oeo/IoIWorker.java:152"
+  ]
+ },
+ {
+  "id": "9012.1716",
+  "number": "1716",
+  "parent": "9012",
+  "alias": "PRMCB",
+  "name": "Participation rate monitor close buffer",
+  "category": "participation",
+  "description": "When the order ends at the close, within this buffer (ms) before the end the participation monitor adds expected closing volume to the max participation volume.",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig part_rate_monitor_close_buffer (30000)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8420",
+   "AlgoConfig.java:2480",
+   "CandidateRegulator.java:1038"
+  ]
+ },
+ {
+  "id": "9012.1717",
+  "number": "1717",
+  "parent": "9012",
+  "alias": "LOOO",
+  "name": "Limit only on open",
+  "category": "auction-open",
+  "description": "When > 0, opening auction orders are sent as LIMIT orders (never market).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set (0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1717-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1717"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1717)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1717)!=null"
+     },
+     {
+      "field": "tag9012(RLMOO)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(RLMOO)=1"
+     }
+    ],
+    "title": "Config sets LOOO=1 for RLMOO/NRLMOO",
+    "explanation": "ai.fixmsg.properties writes LOOO=1 when RLMOO=1 or NRLMOO=1.",
+    "sources": [
+     "ai.fixmsg.properties:90",
+     "ai.fixmsg.properties:93"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8431",
+   "oeo/OpenWorker.java:306"
+  ]
+ },
+ {
+  "id": "9012.1718",
+  "number": "1718",
+  "parent": "9012",
+  "alias": "CSLE",
+  "name": "Close scheduler leftover estimate",
+  "category": "auction-close",
+  "description": "est[,send_buffer_ms[,close_maxpart[,imb_close_maxpart[,minsize_nrls]]]]. >0 makes OPE estimate leftover shares and send them to the close (doCloseOpe=1); send_buffer = time before pre-close end to submit; close_maxpart = desired % of estimated close volume for extra leftover; imb_close_maxpart enables an imbalance-close slice; minsize_nrls = minimum slice in round lots. Also disables purestream EOD mode 2 when <=0.",
+  "valueFormat": "est[,sendbuffer[,maxpart[,imbmaxpart[,minsize_nrls]]]]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "-1; sendbuffer 0; maxpart 0; minsize from AlgoConfig close_scheduler_leftover_minsize_nrls",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1718-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.1718"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1718)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1718)>0"
+     }
+    ],
+    "title": "CSLE forces OPE close handling",
+    "explanation": "doCloseOpe() returns 1 when close_scheduler_leftover_est() > 0.",
+    "sources": [
+     "Parameters.java:13680"
+    ]
+   },
+   {
+    "id": "REL-9012.1718-02",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1718",
+     "9012.1618"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1718)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1718)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "JP",
+      "raw": "compositeExchangeCode=JP"
+     },
+     {
+      "field": "tag9012(26)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(26)!=null"
+     }
+    ],
+    "title": "Japan MOCB default skipped when CSLE set",
+    "explanation": "Config sets MOCB=-20 for JP only when CSLE is null; for exchange JT, CSLE is forced to -1.",
+    "sources": [
+     "ai.fixmsg.properties:527",
+     "ai.fixmsg.properties:561"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8443",
+   "Parameters.java:8459",
+   "Parameters.java:13680",
+   "Parameters.java:5929",
+   "FlexOrderStream.java:17025",
+   "FlexOrderStream.java:17029",
+   "FlexOrderStream.java:17471",
+   "FlexOrderStream.java:17080",
+   "FlexOrderStream.java:7584",
+   "OrderHolder.java:1722"
+  ]
+ },
+ {
+  "id": "9012.1719",
+  "number": "1719",
+  "parent": "9012",
+  "alias": "SYNC",
+  "name": "Synthetic close",
+  "category": "auction-close",
+  "description": "mode[,cap_adv_pct[,cap_value]]: synthetic close mode, cap as % of ADV, and cap value in units of 100000 (optionally prefixed with a 3-letter currency). Parsed, but synthetic_close_* accessors are not read elsewhere in the engine source.",
+  "valueFormat": "mode[,adv_pct[,value|CCYvalue]]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "mode 0, cap_adv 0.05",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1719-01",
+    "kind": "rewrite",
+    "severity": "info",
+    "tags": [
+     "9012.1719"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1719)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1719)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "IN",
+      "raw": "compositeExchangeCode=IN"
+     }
+    ],
+    "title": "India rule resets SYNC=0",
+    "explanation": "ai.fixmsg.properties sets SYNC=0 for India when no close VWAP duration.",
+    "sources": [
+     "ai.fixmsg.properties:647"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8481",
+   "Parameters.java:8498"
+  ]
+ },
+ {
+  "id": "9012.1720",
+  "number": "1720",
+  "parent": "9012",
+  "alias": "PMM",
+  "name": "Preemptive max-part margin",
+  "category": "participation",
+  "description": "When > 0, the computed max participation rate is always divided by the part-rate monitor margin, for all algorithms (normally PART/PART2/PAIR are exempt).",
+  "valueFormat": "number (>0 enables)",
+  "type": "float",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [
+   {
+    "algorithms": [
+     "PART",
+     "PART2",
+     "PAIR"
+    ],
+    "behavior": "margin applied only when PMM>0"
+   }
+  ],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8509",
+   "Parameters.java:13392",
+   "Parameters.java:13395"
+  ]
+ },
+ {
+  "id": "9012.1721",
+  "number": "1721",
+  "parent": "9012",
+  "alias": "MSAU",
+  "name": "Max simultaneous auction orders",
+  "category": "auction-close",
+  "description": "Maximum number of live auction (non-day) work orders; new auction orders beyond it are not created, auction split and layered close workers are capped by it, and value 1 disables would-close and an extra close path.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig max_simul_auction(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1721-01",
+    "kind": "ineffective",
+    "severity": "medium",
+    "tags": [
+     "9012.1721"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1721)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(1721)=1"
+     }
+    ],
+    "title": "MSAU=1 disables would-close",
+    "explanation": "tryWouldClose returns immediately when max_simul_auction==1.",
+    "sources": [
+     "oeo/ConcertStrategy.java:3071",
+     "oeo/ConcertStrategy.java:3205"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8517",
+   "Parameters.java:8520",
+   "FlexOrderStream.java:8217",
+   "oeo/AuctionWorker.java:661",
+   "oeo/AuctionWorker.java:925",
+   "oeo/ConcertStrategy.java:3071",
+   "oeo/LayeredCloseWorker.java:41"
+  ]
+ },
+ {
+  "id": "9012.1722",
+  "number": "1722",
+  "parent": "9012",
+  "alias": "SPT",
+  "name": "Stop post threshold",
+  "category": "posting",
+  "description": "pct[,size]: the postblind size adjustment (NINJA/SHADOW minimum post) is skipped once filled fraction exceeds pct or remaining size <= size.",
+  "valueFormat": "pct_fraction[,shares]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "0.8, size 0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8527",
+   "oeo/ConcertStrategy.java:3662"
+  ]
+ },
+ {
+  "id": "9012.1723",
+  "number": "1723",
+  "parent": "9012",
+  "alias": "APLQS",
+  "name": "At price limit quote size",
+  "category": "risk-control",
+  "description": "factor[,mode] for quote size at price limit; parsed but accessors not read elsewhere in the engine source.",
+  "valueFormat": "factor[,mode]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8543"
+  ]
+ },
+ {
+  "id": "9012.1724",
+  "number": "1724",
+  "parent": "9012",
+  "alias": "IVCB",
+  "name": "Imbalance venue based on cutoff buffer",
+  "category": "auction-open",
+  "description": "Milliseconds before open start that defines a regular-open cutoff in the imbalance-open worker; when non-zero, regular OPEN-level venue allocations are set up and used after that cutoff.",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig imb_venue_based_on_cutoff_buffer(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:8558",
+   "oeo/ImbOpenWorker.java:73"
+  ]
+ },
+ {
+  "id": "9012.1725",
+  "number": "1725",
+  "parent": "9012",
+  "alias": "QCLLC",
+  "name": "QClose late LOC adjustment",
+  "category": "auction-close",
+  "description": "start_s[,end_s]: seconds before continuous end defining a window; inside it QClose auction orders are routed to the late-LOC (LLOC) venue. 0,0 disables. A 2-element value also bypasses the close-only early-return in trySmartClose.",
+  "valueFormat": "start_seconds,end_seconds",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "null (off)",
+  "example": {
+   "value": "300,60",
+   "explanation": "Between 5 min and 1 min before continuous end, send QClose orders to the LLOC venue."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8567",
+   "oeo/QCloseWorker.java:53",
+   "oeo/QCloseWorker.java:147",
+   "oeo/ConcertStrategy.java:2832"
+  ]
+ },
+ {
+  "id": "9012.1726",
+  "number": "1726",
+  "parent": "9012",
+  "alias": "CIOO",
+  "name": "Cleanup IOI-only order",
+  "category": "dark",
+  "description": "flag[,algo]: when an IOI-only order finds no usable IOI venues, CIOO>0 switches it to a cleanup relay algorithm (sub-tag 1 = algo, ':' turned into '^') instead of rejecting with NO_VENUE.",
+  "valueFormat": "flag[,algo_subtags]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1726-01",
+    "kind": "conversion",
+    "severity": "high",
+    "tags": [
+     "9012.1726",
+     "9012.1"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1726)",
+      "op": ">",
+      "value": "0",
+      "raw": "tag9012(1726)>0"
+     },
+     {
+      "field": "usableIOIs",
+      "op": "=",
+      "value": "0",
+      "raw": "usableIOIs=0"
+     }
+    ],
+    "title": "No usable IOIs: convert to cleanup algo",
+    "explanation": "setSwitchToCleanupAlgo(true); setCleanupRelay sets relay CLEANUP with 1=<algo>.",
+    "sources": [
+     "oeo/IoIWorker.java:587",
+     "Parameters.java:11133"
+    ]
+   },
+   {
+    "id": "REL-9012.1726-02",
+    "kind": "reject",
+    "severity": "high",
+    "tags": [
+     "9012.1726"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1726)",
+      "op": "=",
+      "value": "null^0",
+      "raw": "tag9012(1726)=null^0"
+     },
+     {
+      "field": "usableIOIs",
+      "op": "=",
+      "value": "0",
+      "raw": "usableIOIs=0"
+     }
+    ],
+    "title": "Without CIOO, no usable IOIs rejects",
+    "explanation": "rejectOrderAndNotify(NO_VENUE).",
+    "sources": [
+     "oeo/IoIWorker.java:591"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8584",
+   "Parameters.java:11130",
+   "oeo/IoIWorker.java:587",
+   "oeo/IoIWorker.java:659"
+  ]
+ },
+ {
+  "id": "9012.1727",
+  "number": "1727",
+  "parent": "9012",
+  "alias": "STQOM",
+  "name": "Stop queue out-of-money",
+  "category": "posting",
+  "description": "When > 0, the stop-queue logic (STQD) applies even when the order is not in the money.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8596",
+   "oeo/ConcertStrategy.java:5272"
+  ]
+ },
+ {
+  "id": "9012.1728",
+  "number": "1728",
+  "parent": "9012",
+  "alias": "RAPL",
+  "name": "Reject at price limit",
+  "category": "reject",
+  "description": "flag[,close_buffer_s]: reject at price limit (limit up/down). Parsed, but reject_at_price_limit accessors are not read elsewhere in the engine source.",
+  "valueFormat": "flag[,seconds]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "0",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8605",
+   "Parameters.java:8613"
+  ]
+ },
+ {
+  "id": "9012.1729",
+  "number": "1729",
+  "parent": "9012",
+  "alias": "QMD",
+  "name": "Queue min duration",
+  "category": "posting",
+  "description": "Per-layer minimum time (ms) a queue post must stay on market before it is considered for repricing/cancel (index = post layer).",
+  "valueFormat": "ms_layer0,ms_layer1,...",
+  "type": "list",
+  "allowedValues": [],
+  "default": "not set (0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1729-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1729"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1729)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1729)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "C1^C2^CH",
+      "raw": "compositeExchangeCode=C1^C2^CH"
+     }
+    ],
+    "title": "China default QMD=0,30000,60000",
+    "explanation": "Config sets QMD for China.",
+    "sources": [
+     "ai.fixmsg.properties:37"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8621",
+   "Parameters.java:8628",
+   "oeo/PostWorker.java:1206"
+  ]
+ },
+ {
+  "id": "9012.1730",
+  "number": "1730",
+  "parent": "9012",
+  "alias": "RAPLD",
+  "name": "Resume at price limit delay",
+  "category": "risk-control",
+  "description": "Minutes delay to resume after price limit; parsed but not read elsewhere in the engine source.",
+  "valueFormat": "minutes",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8634"
+  ]
+ },
+ {
+  "id": "9012.1731",
+  "number": "1731",
+  "parent": "9012",
+  "alias": "APLM",
+  "name": "At price limit mode",
+  "category": "risk-control",
+  "description": "0 both sides, 1 favorable direction, 2 unfavorable direction (per comment); parsed but not read elsewhere in the engine source.",
+  "valueFormat": "int (0-2)",
+  "type": "enum",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8641",
+   "Parameters.java:8643"
+  ]
+ },
+ {
+  "id": "9012.1732",
+  "number": "1732",
+  "parent": "9012",
+  "alias": "ITIAM",
+  "name": "Index tracking IA margin",
+  "category": "limit-price",
+  "description": "Margin passed to IndexTracker.safePrice for intraday auction (IA) orders.",
+  "valueFormat": "number",
+  "type": "float",
+  "allowedValues": [],
+  "default": "AlgoConfig indextracking_ia_margin (default 0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8651",
+   "AlgoConfig.java:2888",
+   "oeo/AuctionWorker.java:538"
+  ]
+ },
+ {
+  "id": "9012.1733",
+  "number": "1733",
+  "parent": "9012",
+  "alias": "ITAIAL",
+  "name": "Index track apply IA limit",
+  "category": "limit-price",
+  "description": "Whether the index-tracker safe price (ITIAM margin) is applied as the limit for intraday auction market orders (>0) or not (<1).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig indextrack_apply_ia_limit(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:8662",
+   "oeo/AuctionWorker.java:535",
+   "oeo/AuctionWorker.java:543"
+  ]
+ },
+ {
+  "id": "9012.1734",
+  "number": "1734",
+  "parent": "9012",
+  "alias": "AAOR",
+  "name": "Adjust ADVIT on replace",
+  "category": "other",
+  "description": "Parsed into _adjust_advit_on_replace but the accessor is never read in the engine source.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8673"
+  ]
+ },
+ {
+  "id": "9012.1735",
+  "number": "1735",
+  "parent": "9012",
+  "alias": "PME",
+  "name": "Pair match end times",
+  "category": "compound",
+  "description": "For PAIR orders: when > 0 and the two legs have different end times, both legs are set to the earlier end time.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "PAIR"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8681",
+   "FlexOrderStream.java:15874"
+  ]
+ },
+ {
+  "id": "9012.1736",
+  "number": "1736",
+  "parent": "9012",
+  "alias": "EODPRM",
+  "name": "EOD participation rate margin",
+  "category": "participation",
+  "description": "Percent margin added to the max participation rate during EOD processing: multiplier = 1 + max(0.005, EODPRM/100). Without it, max(1.005, AlgoConfig eod_part_rate_margin).",
+  "valueFormat": "percent",
+  "type": "percent",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig eod_part_rate_margin (1.2)",
+  "example": {
+   "value": "10",
+   "explanation": "EOD max participation may exceed the configured max rate by 10%."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8689",
+   "Parameters.java:8692",
+   "AlgoConfig.java:2475",
+   "FlexOrderStream.java:10939",
+   "FlexOrderStream.java:17333"
+  ]
+ },
+ {
+  "id": "9012.1737",
+  "number": "1737",
+  "parent": "9012",
+  "alias": "XSRC",
+  "name": "Shadow rotate cycle",
+  "category": "dark",
+  "description": "Milliseconds for the shadow/dark rotation cycle: used as minimum rotate duration in the LC (dark) worker and as end-time offset for odd-lot work orders outside NA.",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig shadow_rotate_cycle()",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8698",
+   "Parameters.java:8701",
+   "oeo/LCWorker.java:983",
+   "oeo/LCWorker.java:1307",
+   "oeo/ConcertStrategy.java:4934"
+  ]
+ },
+ {
+  "id": "9012.1738",
+  "number": "1738",
+  "parent": "9012",
+  "alias": "R2C",
+  "name": "RVWAP to MOC",
+  "category": "compound",
+  "description": "For relative-VWAP orders with a start/end offset (tag 287): if R2C>=1 and remaining volume before close * rate + MOC size covers the whole order size, the order is converted to IIS. Also allows index-tracker MOC price fallback from last/strike price when no safe price exists.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 (off)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1738-01",
+    "kind": "conversion",
+    "severity": "high",
+    "tags": [
+     "9012.1738",
+     "9012.287",
+     "9012.1"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1738)",
+      "op": ">=",
+      "value": "1",
+      "raw": "tag9012(1738)>=1"
+     },
+     {
+      "field": "tag9012(287)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(287)!=null"
+     }
+    ],
+    "title": "R2C converts RVWAP to IIS",
+    "explanation": "When the MOC piece plus remaining volume participation can cover the order, algorithm is set to IIS.",
+    "sources": [
+     "FlexOrderStream.java:2377",
+     "FlexOrderStream.java:2390"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8709",
+   "FlexOrderStream.java:2330",
+   "FlexOrderStream.java:2352",
+   "FlexOrderStream.java:2377",
+   "FlexOrderStream.java:2390",
+   "FlexOrderStream.java:7356"
+  ]
+ },
+ {
+  "id": "9012.1739",
+  "number": "1739",
+  "parent": "9012",
+  "alias": "CCRLS",
+  "name": "Close cleanup round lots",
+  "category": "auction-close",
+  "description": "Close cleanup size in round lots; accessor falls back to OEOConfig close_cleanup_rls but is not read elsewhere in the engine source.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig close_cleanup_rls()",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8717",
+   "Parameters.java:8720"
+  ]
+ },
+ {
+  "id": "9012.1740",
+  "number": "1740",
+  "parent": "9012",
+  "alias": "CCFRA",
+  "name": "Close cleanup fraction",
+  "category": "auction-close",
+  "description": "Close cleanup fraction; accessor falls back to OEOConfig close_cleanup_fraction but is not read elsewhere in the engine source.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig close_cleanup_fraction()",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8726",
+   "Parameters.java:8729"
+  ]
+ },
+ {
+  "id": "9012.1741",
+  "number": "1741",
+  "parent": "9012",
+  "alias": "PIWVC",
+  "name": "Prefer imbalance-weighted vclose",
+  "category": "auction-close",
+  "description": "Flag preferring imbalance-weighted close volume; accessor has AlgoConfig fallback but no reader outside Parameters was found. Set by Japan config rules together with PIWEVC.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig prefer_imbalance_weighted_vclose",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1741-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1741",
+     "9012.1742"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1741)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1741)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "JP",
+      "raw": "compositeExchangeCode=JP"
+     }
+    ],
+    "title": "JP rules set PIWVC/PIWEVC",
+    "explanation": "L484 sets PIWVC=1^PIWEVC=1 for JP doClose orders started after close start; L490 sets OPEMOC=1^PIWVC=0^PIWEVC=0 for JP VWAP.",
+    "sources": [
+     "ai.fixmsg.properties:484",
+     "ai.fixmsg.properties:490"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8735",
+   "ai.fixmsg.properties:484",
+   "ai.fixmsg.properties:490"
+  ]
+ },
+ {
+  "id": "9012.1742",
+  "number": "1742",
+  "parent": "9012",
+  "alias": "PIWEVC",
+  "name": "Prefer imbalance-weighted evclose",
+  "category": "auction-close",
+  "description": "When < 1, the tag-312 mode 3 short-sell close logic waits for the imbalance map (subject to MOCWIB) and uses imbalance info; when >= 1 that branch is skipped and the expected close volume is used.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig prefer_imbalance_weighted_evclose",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1742-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1742",
+     "9012.1741"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1742)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1742)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "JP",
+      "raw": "compositeExchangeCode=JP"
+     }
+    ],
+    "title": "Set by JP rules",
+    "explanation": "See ai.fixmsg.properties:484/490.",
+    "sources": [
+     "ai.fixmsg.properties:484",
+     "ai.fixmsg.properties:490"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:8744",
+   "oeo/ABSStrategy.java:605"
+  ]
+ },
+ {
+  "id": "9012.1743",
+  "number": "1743",
+  "parent": "9012",
+  "alias": "NDPW",
+  "name": "No-dark post work size",
+  "category": "posting",
+  "description": "When > 0 and the order has no dark (no_dark, no LC worker, or zero dark venues), the post size is the full work size (capped by maxPostLimit).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig nodark_post_worksize(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8753",
+   "oeo/ConcertStrategy.java:3889"
+  ]
+ },
+ {
+  "id": "9012.1744",
+  "number": "1744",
+  "parent": "9012",
+  "alias": "MAMM",
+  "name": "Max allowed open shares market order multiplier",
+  "category": "risk-control",
+  "description": "For mustComplete orders: multiplier of max(minfinish, 15-second average volume) defining how many open shares may still be completed with a market order; if open shares exceed it before the buffer, mustComplete finishing is triggered.",
+  "valueFormat": "multiplier",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig max_allowed_openshares_market_order_mult",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1744-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1744",
+     "9012.23"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1744)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1744)!=null"
+     },
+     {
+      "field": "tag9012(23)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(23)=null"
+     }
+    ],
+    "title": "MAMM only for mustComplete",
+    "explanation": "Used only when param.mustComplete() (tag 23).",
+    "sources": [
+     "oeo/ConcertStrategy.java:5486"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "medium",
+  "sources": [
+   "Parameters.java:8762",
+   "oeo/ConcertStrategy.java:5489"
+  ]
+ },
+ {
+  "id": "9012.1745",
+  "number": "1745",
+  "parent": "9012",
+  "alias": "EWPVA",
+  "name": "Enforce work order price vs avg price",
+  "category": "limit-price",
+  "description": "When > 0, day work orders priced better than the order's average fill price are closed (CLOSE_INVALID): child prices must be worse than avgprice (special CLOSEB logic).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1745-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.1745",
+     "9012.1746",
+     "9012.1"
+    ],
+    "algorithms": [
+     "CLOSEB"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1745)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1745)!=null"
+     },
+     {
+      "field": "tag9012(88)",
+      "op": "=",
+      "value": "CLOSEB",
+      "raw": "tag9012(88)=CLOSEB"
+     }
+    ],
+    "title": "CLOSEB rule sets EWPVA=1 and NTBCE=60,16",
+    "explanation": "Config converts 88=CLOSEB to ALGO=CLOSEB with RNT=0^232=0^76=0^EWPVA=1^NTBCE=60,16.",
+    "sources": [
+     "ai.fixmsg.properties:416",
+     "ai.fixmsg.properties:417"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8771",
+   "FlexOrderStream.java:8633"
+  ]
+ },
+ {
+  "id": "9012.1746",
+  "number": "1746",
+  "parent": "9012",
+  "alias": "NTBCE",
+  "name": "No take before continuous end",
+  "category": "taking",
+  "description": "seconds[,spread_bps]: within the last N seconds before continuous end, do not take when the quoted spread exceeds spread_bps.",
+  "valueFormat": "seconds[,spread_bps]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "-1 (off)",
+  "example": {
+   "value": "60,16",
+   "explanation": "In the last 60 s, no take if spread > 16 bps."
+  },
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1746-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1746"
+    ],
+    "algorithms": [
+     "CLOSEB"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1746)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1746)!=null"
+     },
+     {
+      "field": "tag9012(88)",
+      "op": "=",
+      "value": "CLOSEB",
+      "raw": "tag9012(88)=CLOSEB"
+     }
+    ],
+    "title": "Set by CLOSEB rule",
+    "explanation": "See ai.fixmsg.properties:416.",
+    "sources": [
+     "ai.fixmsg.properties:416"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8780",
+   "oeo/ABSStrategy.java:1472",
+   "oeo/ABSStrategy.java:1475"
+  ]
+ },
+ {
+  "id": "9012.1747",
+  "number": "1747",
+  "parent": "9012",
+  "alias": "BDC",
+  "name": "Block decreasing candidates",
+  "category": "schedule",
+  "description": "When > 0, a normal regulator candidate that is 'decreasing' relative to the previous candidate is dropped.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1747-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1747"
+    ],
+    "algorithms": [
+     "PCAP",
+     "VWAP",
+     "TMX"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1747)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1747)!=null"
+     },
+     {
+      "field": "algorithm",
+      "op": "=",
+      "value": "PCAP^VWAP^TMX",
+      "raw": "algorithm=PCAP^VWAP^TMX"
+     }
+    ],
+    "title": "Config defaults BDC=1 for PCAP and China VWAP/TMX",
+    "explanation": "Config defaults BDC=1 for PCAP and China VWAP/TMX (config default).",
+    "sources": [
+     "ai.fixmsg.properties:437",
+     "ai.fixmsg.properties:451"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8795",
+   "CandidateProcessor.java:2357"
+  ]
+ },
+ {
+  "id": "9012.1748",
+  "number": "1748",
+  "parent": "9012",
+  "alias": "PQSD",
+  "name": "Post quote size dynamic",
+  "category": "posting",
+  "description": "mode[,max[,min]]: mode 1 scales the post quote-size factor (PQS, tag 1546) by sqrt(avg quote size / current quote size), clamped to [min, max].",
+  "valueFormat": "mode[,max[,min]]",
+  "type": "composite",
+  "allowedValues": [],
+  "default": "mode -1, max 25, min (field default)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1748-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1748",
+     "9012.1546"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1748)",
+      "op": "=",
+      "value": "1",
+      "raw": "tag9012(1748)=1"
+     },
+     {
+      "field": "tag9012(1546)",
+      "op": "=",
+      "value": "null",
+      "raw": "tag9012(1546)=null"
+     }
+    ],
+    "title": "PQSD requires PQS",
+    "explanation": "Only applies when post_quotesize_factor > 0.",
+    "sources": [
+     "oeo/ConcertStrategy.java:3724"
+    ]
+   },
+   {
+    "id": "REL-9012.1748-02",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1748"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1748)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1748)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "IN",
+      "raw": "compositeExchangeCode=IN"
+     }
+    ],
+    "title": "India default PQSD=1,10,1",
+    "explanation": "India default PQSD=1,10,1 (config default).",
+    "sources": [
+     "ai.fixmsg.properties:435"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8805",
+   "oeo/ConcertStrategy.java:3724",
+   "oeo/ConcertStrategy.java:3728"
+  ]
+ },
+ {
+  "id": "9012.1749",
+  "number": "1749",
+  "parent": "9012",
+  "alias": "DPASM",
+  "name": "Dark passive mode",
+  "category": "dark",
+  "description": "1 = special dark passive state handling when dark passive (tag 215) is 3, 4 or 5 (midpoint pegged vs passive pegged considered separately).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig dark_passive_mode()",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1749-01",
+    "kind": "requires",
+    "severity": "low",
+    "tags": [
+     "9012.1749",
+     "9012.215"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1749)",
+      "op": ">=",
+      "value": "1",
+      "raw": "tag9012(1749)>=1"
+     },
+     {
+      "field": "tag9012(215)",
+      "op": "!=",
+      "value": "3^4^5",
+      "raw": "tag9012(215)!=3^4^5"
+     }
+    ],
+    "title": "DPASM only with 215=3..5",
+    "explanation": "dpasm() requires darkPassive between 3 and 5.",
+    "sources": [
+     "oeo/ABSWorker.java:255"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8824",
+   "Parameters.java:8828",
+   "oeo/ABSWorker.java:255",
+   "oeo/ConcertStrategy.java:4146"
+  ]
+ },
+ {
+  "id": "9012.1750",
+  "number": "1750",
+  "parent": "9012",
+  "alias": "WOL",
+  "name": "Wrap odd lot",
+  "category": "other",
+  "description": "When > 0, a child order is enlarged to include remaining shares if what would be left is below the min order size / round lot (avoids leaving an odd lot).",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1750-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1750"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1750)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1750)!=null"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "C1^C2^CH",
+      "raw": "compositeExchangeCode=C1^C2^CH"
+     }
+    ],
+    "title": "China defaults WOL=1 (STAR board, sells)",
+    "explanation": "China defaults WOL=1 (STAR board, sells) (config default).",
+    "sources": [
+     "ai.fixmsg.properties:445",
+     "ai.fixmsg.properties:446"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8839",
+   "FlexOrderStream.java:10501",
+   "FlexOrderStream.java:10970"
+  ]
+ },
+ {
+  "id": "9012.1751",
+  "number": "1751",
+  "parent": "9012",
+  "alias": "ITSM",
+  "name": "Initial take skip min size",
+  "category": "taking",
+  "description": "When on, the first take (no fills yet) ignores the preferred/venue minimum size. Default: on if aggression > OEOConfig initial_take_skip_minsize_aggression.",
+  "valueFormat": "int (0/1)",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "-1 -> aggression() > OEOConfig threshold",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8847",
+   "Parameters.java:8850",
+   "oeo/TakeWorker.java:139",
+   "oeo/TakeWorker.java:669",
+   "Candidate.java:515",
+   "OrderRegulation.java:746"
+  ]
+ },
+ {
+  "id": "9012.1752",
+  "number": "1752",
+  "parent": "9012",
+  "alias": "MOOWIB",
+  "name": "MOO wait imbalance buffer",
+  "category": "auction-open",
+  "description": "Milliseconds after order creation during which smart-open waits for imbalance data if none has arrived yet (handles data-feed subscription delay).",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig moo_wait_imb_buffer(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8856",
+   "oeo/ConcertStrategy.java:6295"
+  ]
+ },
+ {
+  "id": "9012.1753",
+  "number": "1753",
+  "parent": "9012",
+  "alias": "DMAO",
+  "name": "DMA odd lot",
+  "category": "market-specific",
+  "description": "When > 0 for DMA/DLP strategies, if the leftover is less than a round lot the allocation minimum sizes are reset to allow sending the odd lot.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig dma_oddlot()",
+  "example": null,
+  "appliesTo": [
+   "DMA",
+   "SDMA",
+   "ICEDMA",
+   "DLP"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1753-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1753"
+    ],
+    "algorithms": [
+     "SDMA",
+     "ICEDMA",
+     "DMA",
+     "DLP"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1753)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1753)!=null"
+     },
+     {
+      "field": "exchangeCode",
+      "op": "=",
+      "value": "C1^C2^CG^CS",
+      "raw": "exchangeCode=C1^C2^CG^CS"
+     },
+     {
+      "field": "side",
+      "op": "=",
+      "value": "sell^sellshort",
+      "raw": "side=sell^sellshort"
+     }
+    ],
+    "title": "China sells default DMAO=1",
+    "explanation": "China sells default DMAO=1 (config default).",
+    "sources": [
+     "ai.fixmsg.properties:447"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8865",
+   "oeo/DMAStrategy.java:787",
+   "oeo/DLPStrategy.java:373"
+  ]
+ },
+ {
+  "id": "9012.1754",
+  "number": "1754",
+  "parent": "9012",
+  "alias": "EAPP",
+  "name": "Enforce auction passive price limit",
+  "category": "auction-close",
+  "description": "Accessor with OEOConfig fallback; not read elsewhere in the engine source.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig enforce_auction_passive_pricelimit",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8874"
+  ]
+ },
+ {
+  "id": "9012.1755",
+  "number": "1755",
+  "parent": "9012",
+  "alias": "MOCWIB",
+  "name": "MOC wait imbalance buffer",
+  "category": "auction-close",
+  "description": "Milliseconds after order creation during which close logic (tryClose, QMOC, would-close, tag-312 mode 3) waits for the imbalance map if empty.",
+  "valueFormat": "milliseconds",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig moc_wait_imb_buffer(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8883",
+   "oeo/ConcertStrategy.java:2175",
+   "oeo/ConcertStrategy.java:2680",
+   "oeo/ABSStrategy.java:609"
+  ]
+ },
+ {
+  "id": "9012.1756",
+  "number": "1756",
+  "parent": "9012",
+  "alias": "PFVPROF",
+  "name": "Print full volume profile",
+  "category": "monitoring",
+  "description": "1 = log the full volume profile on profile update.",
+  "valueFormat": "int (0/1)",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8892",
+   "FlexOrderStream.java:2310"
+  ]
+ },
+ {
+  "id": "9012.1757",
+  "number": "1757",
+  "parent": "9012",
+  "alias": "AWP",
+  "name": "Algo sweep low threshold",
+  "category": "taking",
+  "description": "Parsed (default 0.2) but accessor not read elsewhere in the engine source.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "0.2",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8899",
+   "Parameters.java:8901"
+  ]
+ },
+ {
+  "id": "9012.1758",
+  "number": "1758",
+  "parent": "9012",
+  "alias": "BWP",
+  "name": "Algo sweep high threshold",
+  "category": "taking",
+  "description": "Parsed but accessor not read elsewhere in the engine source.",
+  "valueFormat": "float",
+  "type": "float",
+  "allowedValues": [],
+  "default": "field default",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8908"
+  ]
+ },
+ {
+  "id": "9012.1759",
+  "number": "1759",
+  "parent": "9012",
+  "alias": "DMAPPL",
+  "name": "DMA post price level",
+  "category": "limit-price",
+  "description": "Price level (relative to the quote, via Statics.priceAtLevel) at which DMA/NDMA/DLP strategies post and chase; enables price chasing even for limit orders. Values > -10000 are active.",
+  "valueFormat": "int level (e.g. -1, 0, 1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set (-10000 sentinel)",
+  "example": null,
+  "appliesTo": [
+   "DMA",
+   "SDMA",
+   "ICEDMA",
+   "DLP"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1759-01",
+    "kind": "side_effect",
+    "severity": "medium",
+    "tags": [
+     "9012.1759"
+    ],
+    "algorithms": [
+     "SDMA",
+     "ICEDMA",
+     "DMA"
+    ],
+    "trigger": [
+     {
+      "field": "tag9012(1759)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1759)!=null"
+     },
+     {
+      "field": "side",
+      "op": "=",
+      "value": "sellshort",
+      "raw": "side=sellshort"
+     },
+     {
+      "field": "compositeExchangeCode",
+      "op": "=",
+      "value": "HK",
+      "raw": "compositeExchangeCode=HK"
+     },
+     {
+      "field": "tag9012(155)",
+      "op": "=",
+      "value": "HKEX^SG",
+      "raw": "tag9012(155)=HKEX^SG"
+     }
+    ],
+    "title": "HK short-sell DMA default DMAPPL=-1",
+    "explanation": "HK short-sell DMA default DMAPPL=-1 (config default).",
+    "sources": [
+     "ai.fixmsg.properties:130"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8916",
+   "oeo/DMAStrategy.java:284",
+   "oeo/DMAStrategy.java:298",
+   "oeo/NDMAStrategy.java:401",
+   "oeo/DLPStrategy.java:222"
+  ]
+ },
+ {
+  "id": "9012.1760",
+  "number": "1760",
+  "parent": "9012",
+  "alias": "RPSF",
+  "name": "Randomize post size factor",
+  "category": "posting",
+  "description": "Sigma for randomizing post sizes (capped by queue/under-post config); 0 disables. Default uses AlgoConfig alloc_randomize_factor.",
+  "valueFormat": "fraction",
+  "type": "float",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig alloc_randomize_factor (0.20)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [
+   {
+    "id": "REL-9012.1760-01",
+    "kind": "side_effect",
+    "severity": "info",
+    "tags": [
+     "9012.1760"
+    ],
+    "algorithms": [],
+    "trigger": [
+     {
+      "field": "tag9012(1760)",
+      "op": "!=",
+      "value": "null",
+      "raw": "tag9012(1760)!=null"
+     },
+     {
+      "field": "tag9012(155)",
+      "op": "=",
+      "value": "MAYBANK",
+      "raw": "tag9012(155)=MAYBANK"
+     }
+    ],
+    "title": "MAYBANK default RPSF=0",
+    "explanation": "MAYBANK default RPSF=0 (config default).",
+    "sources": [
+     "ai.fixmsg.properties:408"
+    ]
+   }
+  ],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8924",
+   "oeo/PostWorker.java:841",
+   "AlgoConfig.java:2780"
+  ]
+ },
+ {
+  "id": "9012.1761",
+  "number": "1761",
+  "parent": "9012",
+  "alias": "AGGPING",
+  "name": "Prefer aggressive ping over take",
+  "category": "taking",
+  "description": "When on, take aggression is replaced by AGGR_PING (IOC ping) and DMA take allocations use AGGR_PING venues.",
+  "valueFormat": "int (0/1)",
+  "type": "bool",
+  "allowedValues": [],
+  "default": "-1 -> AlgoConfig prefer_aggr_ping_over_take(exchange, composite) (default 0)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8936",
+   "ExchangeMaster.java:852",
+   "oeo/DMAStrategy.java:95",
+   "AlgoConfig.java:3642"
+  ]
+ },
+ {
+  "id": "9012.1762",
+  "number": "1762",
+  "parent": "9012",
+  "alias": "CPBA",
+  "name": "Check price book atime",
+  "category": "other",
+  "description": "Parsed but accessor not read in the engine source.",
+  "valueFormat": "int",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "low",
+  "sources": [
+   "Parameters.java:8945"
+  ]
+ },
+ {
+  "id": "9012.1763",
+  "number": "1763",
+  "parent": "9012",
+  "alias": "PSPW",
+  "name": "Prefer sweep-post would",
+  "category": "would",
+  "description": "When > 0, would executions use the 'smartpost' execution customizer exchanges if available.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8953",
+   "oeo/ConcertStrategy.java:649"
+  ]
+ },
+ {
+  "id": "9012.1764",
+  "number": "1764",
+  "parent": "9012",
+  "alias": "PREFR",
+  "name": "Post reserve expected fill rate",
+  "category": "posting",
+  "description": "Fraction: reserves shares from posting so take has shares: reserved = mustMake - excluded - post*rate; post at least hard size.",
+  "valueFormat": "fraction",
+  "type": "float",
+  "allowedValues": [],
+  "default": "not set",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8961",
+   "oeo/ConcertStrategy.java:3818"
+  ]
+ },
+ {
+  "id": "9012.1765",
+  "number": "1765",
+  "parent": "9012",
+  "alias": "HPFT",
+  "name": "Hold post for take",
+  "category": "posting",
+  "description": "1 = do not post passively while the take worker is in take-play-take mode.",
+  "valueFormat": "int (0/1)",
+  "type": "int",
+  "allowedValues": [],
+  "default": "-1 -> OEOConfig hold_post_for_take(exchange, composite)",
+  "example": null,
+  "appliesTo": [
+   "ALL"
+  ],
+  "algorithmDependent": [],
+  "interactions": [],
+  "internal": true,
+  "confidence": "high",
+  "sources": [
+   "Parameters.java:8969",
+   "oeo/PostWorker.java:785",
+   "oeo/PostWorker.java:854"
+  ]
+ }
+]

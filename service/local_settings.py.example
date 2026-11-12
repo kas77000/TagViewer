@@ -1,0 +1,32 @@
+# Copy to local_settings.py (git ignores it) and edit. Every name is optional; the
+# defaults are in service/settings.py.
+
+# The share folder prepared by tools/configure_share.py (UNC path is fine).
+SHARE_PATH = r"\\server\share\TagViewer"
+
+# OMS real-time database (RDB) holding today's `target` table.
+KDB_HOST = "rdb-host"
+KDB_PORT = 5010
+KDB_USER = None          # or "user"
+KDB_PASSWORD = None
+KDB_TIMEOUT = 10.0       # seconds
+
+# Which ai.fixmsg.properties rule set (as named in the knowledge base) to evaluate.
+RULE_SET = "ai.fixmsg.properties"
+
+# Extra context for rule conditions, read from a per-order stock table. Set
+# STOCK_TABLE = None to disable. Map: condition field -> column of that table.
+# Verify the column names against `meta target_stock` before relying on them.
+STOCK_TABLE = "target_stock"
+STOCK_FIELD_MAP = {
+    "adv": "adv",
+    "spread": "spread",
+    "roundLotSize": "roundlotsize",
+    # "compositeExchangeCode": "<column holding HK / JP / C1 ...>",
+}
+
+# Alternatively derive compositeExchangeCode from the symbol, e.g. "0700 HK" -> HK.
+# SYM_EXCHANGE_REGEX = r"[ .](?P<code>[A-Z0-9]{2})$"
+
+POLL_SECONDS = 1.0
+KEEP_DAYS = 7            # processed/failed requests older than this are deleted

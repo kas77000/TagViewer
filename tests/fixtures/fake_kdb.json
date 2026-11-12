@@ -1,0 +1,17 @@
+{
+  "target": [
+    {"id_target": 1001, "time": "09:31:02.120", "id_server": 3, "trader": "DESK1", "basket": "BSK01", "sym": "0700 HK",
+     "side": "sellshort", "size": 20000, "algo": "PEG", "limit_price": 0,
+     "fixmsg": "9001=SDMA;9002=09:30:00;9012=154=1^PQS=0.5,1,0,1^6=20;9012=244=1;9001=PEG;9012=152=1"},
+    {"id_target": 1002, "time": "10:02:44.010", "id_server": 1, "trader": "DESK2", "basket": "SSGA_ROLL", "sym": "7203 JP",
+     "side": "buy", "size": 150000, "algo": "VWAP", "limit_price": 2810.5,
+     "fixmsg": "9001=VWAP;9003=15:00:00;9012=AUCTIONS=0^10=B20,1^6=12;9012=14=0^15=0^171=0"},
+    {"id_target": 1003, "time": "11:15:00.000", "id_server": 2, "trader": "DESK3", "basket": "ARROWST_X", "sym": "005930 KS",
+     "side": "sell", "size": 5000, "algo": "LINE", "limit_price": 0,
+     "fixmsg": "9001=LINE;9012=1=LINE^117=1^9999=7"}
+  ],
+  "target_stock": [
+    {"id_target": 1001, "pex": "HK", "adv": 15000000, "spread": 2.1, "roundlotsize": 100},
+    {"id_target": 1002, "pex": "JP", "adv": 12000000, "spread": 1.2, "roundlotsize": 100}
+  ]
+}
